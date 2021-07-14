@@ -5,7 +5,8 @@ require('alpinejs');
 
 $(document).ready(function() {
 
-    if($('#NotesList')) getNotes()
+    if($('#NotesListAll')) getAllNotes()
+    if($('#NotesListMy')) getMyNotes()
 
 })
 
@@ -18,27 +19,52 @@ const fetchParams = {
 }
 
 
-async function getNotes() {
-    $('#NotesList').html('')
+async function getAllNotes() {
+    $('#NotesListAll').html('')
 
-    let response = await fetch('/api/notes', fetchParams).then((res) => res.json()).then(notes => {
+    let response = await fetch('/api/getAllNotes', fetchParams).then((res) => res.json()).then(notes => {
         notes.forEach((note) => {
-            console.log(note);
             const isPrivate = (note.private)
                 ? '<span class="ml-3 badge rounded-pill bg-dark text-light">Private</span>'
                 : ''
 
-            $('#NotesList').append(
+                const createdAt = new Date(note.created_at)
+
+            $('#NotesListAll').append(
 '<div class="bg-white mb-3 shadow-sm rounded-3">' +
     '<div class="p-6">' +
-        '<a href="/note/' + note.id + '">' + note.title + '</a>' +
+        '<a class="text-decoration-none" href="/note/' + note.id + '"><strong>' + note.title + '</strong></a>' +
+        '<span class="float-end text-secondary">' + createdAt.toLocaleString() + '</span>' +
+        '<span class="float-end mx-3">' + note.author.name + '</span>' +
         isPrivate +
      '</div>' +
 '</div>'
             )
         })
     })
-    // response = response.json()
-    // console.log(response);
-    // return await response.json()
+}
+
+async function getMyNotes() {
+    $('#NotesListMy').html('')
+
+    let response = await fetch('/api/getMyNotes', fetchParams).then((res) => res.json()).then(notes => {
+        notes.forEach((note) => {
+            const isPrivate = (note.private)
+                ? '<span class="ml-3 badge rounded-pill bg-dark text-light">Private</span>'
+                : ''
+
+                const createdAt = new Date(note.created_at)
+
+            $('#NotesListMy').append(
+'<div class="bg-white mb-3 shadow-sm rounded-3">' +
+    '<div class="p-6">' +
+        '<a class="text-decoration-none" href="/note/' + note.id + '"><strong>' + note.title + '</strong></a>' +
+        '<span class="float-end text-secondary">' + createdAt.toLocaleString() + '</span>' +
+        '<span class="float-end mx-3">' + note.author.name + '</span>' +
+        isPrivate +
+     '</div>' +
+'</div>'
+            )
+        })
+    })
 }

@@ -14,9 +14,19 @@ use App\Models\Note;
 class NoteController extends Controller
 {
 
-    public function notes()
+    public function allNotes()
     {
         return view('notes.notes');
+    }
+
+    public function myNotes()
+    {
+        return view('notes.my');
+    }
+
+    public function UserNotes()
+    {
+        return view('notes.user');
     }
 
 
@@ -36,13 +46,21 @@ class NoteController extends Controller
     }
 
 
-    public function getNotes(Request $request)
+
+    public function getAllNotes(Request $request)
     {
         if(Auth::check()) {
-            $notes = Note::all();
+            $notes = Note::with('author')->get();
         } else {
-            $notes = Note::where('private', 0)->get();
+            $notes = Note::with('author')->where('private', 0)->get();
         }
+
+        return $notes;
+    }
+
+    public function getMyNotes(Request $request)
+    {
+        $notes = Note::with('author')->where([['private', 0], ['author', Auth::user()->id]])->get();
 
         return $notes;
     }
@@ -54,7 +72,7 @@ class NoteController extends Controller
 
 
 
-        return redirect('notes');
+        return redirect('/my');
 
     }
 
@@ -68,7 +86,7 @@ class NoteController extends Controller
 
         Note::create($note);
 
-        return redirect('notes');
+        return redirect('/my');
 
     }
 
@@ -82,7 +100,7 @@ class NoteController extends Controller
         //
         // Note::create($note);
 
-        return redirect('notes');
+        return redirect('/my');
 
     }
 }

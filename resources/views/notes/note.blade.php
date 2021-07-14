@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-secondary">
             {{ $title }}
             @if($private)
             <span class="ml-3 badge rounded-pill bg-dark text-light">Private</span>

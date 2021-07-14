@@ -12,9 +12,16 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-nav-link :href="route('notes')" :active="request()->routeIs('notes')">
+                    <x-nav-link class="text-decoration-none" :href="route('notes')" :active="request()->routeIs('notes')">
                         {{ __('Notes') }}
                     </x-nav-link>
+
+                    @auth
+                    <x-nav-link class="text-decoration-none" :href="route('notes.my')" :active="request()->routeIs('notes.my')">
+                        {{ __('My notes') }}
+                    </x-nav-link>
+                    @endauth
+
                 </div>
             </div>
 

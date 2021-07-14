@@ -3824,7 +3824,8 @@ __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
 __webpack_require__(/*! alpinejs */ "./node_modules/alpinejs/dist/alpine.js");
 
 $(document).ready(function () {
-  if ($('#NotesList')) getNotes();
+  if ($('#NotesListAll')) getAllNotes();
+  if ($('#NotesListMy')) getMyNotes();
 });
 var fetchParams = {
   method: "POST",
@@ -3834,26 +3835,26 @@ var fetchParams = {
   }
 };
 
-function getNotes() {
-  return _getNotes.apply(this, arguments);
+function getAllNotes() {
+  return _getAllNotes.apply(this, arguments);
 }
 
-function _getNotes() {
-  _getNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+function _getAllNotes() {
+  _getAllNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
     var response;
     return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            $('#NotesList').html('');
+            $('#NotesListAll').html('');
             _context.next = 3;
-            return fetch('/api/notes', fetchParams).then(function (res) {
+            return fetch('/api/getAllNotes', fetchParams).then(function (res) {
               return res.json();
             }).then(function (notes) {
               notes.forEach(function (note) {
-                console.log(note);
                 var isPrivate = note["private"] ? '<span class="ml-3 badge rounded-pill bg-dark text-light">Private</span>' : '';
-                $('#NotesList').append('<div class="bg-white mb-3 shadow-sm rounded-3">' + '<div class="p-6">' + '<a href="/note/' + note.id + '">' + note.title + '</a>' + isPrivate + '</div>' + '</div>');
+                var createdAt = new Date(note.created_at);
+                $('#NotesListAll').append('<div class="bg-white mb-3 shadow-sm rounded-3">' + '<div class="p-6">' + '<a class="text-decoration-none" href="/note/' + note.id + '"><strong>' + note.title + '</strong></a>' + '<span class="float-end text-secondary">' + createdAt.toLocaleString() + '</span>' + '<span class="float-end mx-3">' + note.author.name + '</span>' + isPrivate + '</div>' + '</div>');
               });
             });
 
@@ -3867,7 +3868,43 @@ function _getNotes() {
       }
     }, _callee);
   }));
-  return _getNotes.apply(this, arguments);
+  return _getAllNotes.apply(this, arguments);
+}
+
+function getMyNotes() {
+  return _getMyNotes.apply(this, arguments);
+}
+
+function _getMyNotes() {
+  _getMyNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
+    var response;
+    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            $('#NotesListMy').html('');
+            _context2.next = 3;
+            return fetch('/api/getMyNotes', fetchParams).then(function (res) {
+              return res.json();
+            }).then(function (notes) {
+              notes.forEach(function (note) {
+                var isPrivate = note["private"] ? '<span class="ml-3 badge rounded-pill bg-dark text-light">Private</span>' : '';
+                var createdAt = new Date(note.created_at);
+                $('#NotesListMy').append('<div class="bg-white mb-3 shadow-sm rounded-3">' + '<div class="p-6">' + '<a class="text-decoration-none" href="/note/' + note.id + '"><strong>' + note.title + '</strong></a>' + '<span class="float-end text-secondary">' + createdAt.toLocaleString() + '</span>' + '<span class="float-end mx-3">' + note.author.name + '</span>' + isPrivate + '</div>' + '</div>');
+              });
+            });
+
+          case 3:
+            response = _context2.sent;
+
+          case 4:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+  return _getMyNotes.apply(this, arguments);
 }
 
 /***/ }),

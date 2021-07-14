@@ -13,13 +13,18 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', 'NoteController@notes')->name('notes');
+Route::get('/', 'NoteController@allNotes')->name('notes');
 Route::get('/note/{note}', 'NoteController@note');
-Route::post('/api/notes', 'NoteController@getNotes');
+
+
+Route::post('/api/getAllNotes', 'NoteController@getAllNotes');
+Route::post('/api/getMyNotes', 'NoteController@getMyNotes');
 
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/my', 'NoteController@myNotes')->name('notes.my');
+
     Route::post('/notes/share', 'NoteController@share')->name('notes.share');
     Route::post('/notes/create', 'NoteController@create')->name('notes.create');
     Route::post('/notes/update', 'NoteController@update')->name('notes.update');
