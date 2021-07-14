@@ -13,16 +13,18 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', 'NoteController@notes')->name('notes');
+Route::get('/note/{note}', 'NoteController@note');
+Route::post('/api/notes', 'NoteController@getNotes');
+
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/notes/share', 'NoteController@share')->name('notes.share');
+    Route::post('/notes/create', 'NoteController@create')->name('notes.create');
+    Route::post('/notes/update', 'NoteController@update')->name('notes.update');
+    Route::post('/notes/delete', 'NoteController@delete')->name('notes.delete');
 
-    Route::get('/dashboard', function () {
-        return view('welcome');
-    })->name('dashboard');
-    
 });
 
 require __DIR__.'/auth.php';
