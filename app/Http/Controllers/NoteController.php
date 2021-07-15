@@ -34,6 +34,28 @@ class NoteController extends Controller
     }
 
 
+    public function search(Request $request)
+    {
+        $notes = [];
+
+        if($request->has('search')) {
+            if(Auth::check()) {
+                $notes = Note::where('title', 'LIKE', '%' . $request->search . '%')
+                ->orWhere('text', 'LIKE', '%' . $request->search . '%')
+                ->with('_author')->get();
+            } else {
+                $notes = Note::where([['private', 0], ['title', 'LIKE', '%' . $request->search . '%']])
+                ->orWhere([['private', 0], ['text', 'LIKE', '%' . $request->search . '%']])
+                ->with('_author')->get();
+            }
+        }
+
+        return view('notes.search', [
+            'notes' => $notes
+        ]);
+
+    }
+
     public function note($note)
     {
         $note = Note::where('id', $note)->with('_author')->first();

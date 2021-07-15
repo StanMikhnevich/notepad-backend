@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', 'NoteController@allNotes')->name('notes');
+Route::get('/search', 'NoteController@search')->name('notes.search');
 Route::get('/note/{note}', 'NoteController@note');
 
 Route::post('/api/getAllNotes', 'NoteController@getAllNotes');
