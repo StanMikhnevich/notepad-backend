@@ -20,6 +20,10 @@
                     <x-nav-link class="text-decoration-none" :href="route('notes.my')" :active="request()->routeIs('notes.my')">
                         {{ __('My notes') }}
                     </x-nav-link>
+
+                    <x-nav-link class="text-decoration-none" :href="route('notes.shared')" :active="request()->routeIs('notes.shared')">
+                        {{ __('Shared notes') }}
+                    </x-nav-link>
                     @endauth
 
                 </div>

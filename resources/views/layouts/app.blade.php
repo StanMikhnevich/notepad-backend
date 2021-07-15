@@ -25,6 +25,12 @@
             <!-- Page Heading -->
             <header class="container py-4">
                 {{ $header }}
+                @if(session('notification'))
+                    <div class="alert alert-{{ session('type') }} alert-dismissible fade show mt-5" role="alert">
+                        {!! session('msg') !!}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
             </header>
 
             <!-- Page Content -->

@@ -3824,13 +3824,49 @@ __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
 __webpack_require__(/*! alpinejs */ "./node_modules/alpinejs/dist/alpine.js");
 
 $(document).ready(function () {
-  if ($('#NotesListAll')) getAllNotes();
-  if ($('#NotesListMy')) getMyNotes();
+  if ($('#NotesListAll').length) getAllNotes();
+  if ($('#NotesListMy').length) getMyNotes();
+  if ($('#NotesListShared').length) getSharedNotes();
+  $('#NoteShareModalEmail').on('keyup keypress change mouseout', function () {
+    var _this = this;
+
+    var email = $(this).val();
+
+    if (email.length <= 5) {
+      return;
+    } // Check user by email
+
+
+    $.ajax({
+      url: '/api/checkUserByEmail',
+      type: 'POST',
+      data: {
+        email: email
+      },
+      async: true,
+      headers: {
+        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')
+      },
+      dataType: 'JSON',
+      success: function success(res) {
+        if (!res.success) {
+          $(_this).next().text(res.msg);
+          $(_this).closest('form').find('button[type=submit]').attr('disabled', true);
+          return;
+        }
+
+        $(_this).closest('form').find('button[type=submit]').attr('disabled', false);
+        $(_this).next().html('<i class="bi bi-person-check text-success"></i> ' + res.user.name);
+      }
+    });
+  });
 });
 var fetchParams = {
   method: "POST",
   credentials: 'same-origin',
   headers: {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
     "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')
   }
 };
@@ -3854,7 +3890,7 @@ function _getAllNotes() {
               notes.forEach(function (note) {
                 var isPrivate = note["private"] ? '<span class="ml-3 badge rounded-pill bg-dark text-light">Private</span>' : '';
                 var createdAt = new Date(note.created_at);
-                $('#NotesListAll').append('<div class="bg-white mb-3 shadow-sm rounded-3">' + '<div class="p-6">' + '<a class="text-decoration-none" href="/note/' + note.id + '"><strong>' + note.title + '</strong></a>' + '<span class="float-end text-secondary">' + createdAt.toLocaleString() + '</span>' + '<span class="float-end mx-3">' + note.author.name + '</span>' + isPrivate + '</div>' + '</div>');
+                $('#NotesListAll').append('<div class="bg-white mb-3 shadow-sm rounded-3">' + '<div class="p-6">' + '<a class="text-decoration-none" href="/note/' + note.id + '"><strong>' + note.title + '</strong></a>' + '<span class="float-end text-secondary">' + createdAt.toLocaleString() + '</span>' + '<span class="float-end mx-3">' + note._author.name + '</span>' + isPrivate + '</div>' + '</div>');
               });
             });
 
@@ -3877,7 +3913,6 @@ function getMyNotes() {
 
 function _getMyNotes() {
   _getMyNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
-    var response;
     return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
@@ -3890,14 +3925,11 @@ function _getMyNotes() {
               notes.forEach(function (note) {
                 var isPrivate = note["private"] ? '<span class="ml-3 badge rounded-pill bg-dark text-light">Private</span>' : '';
                 var createdAt = new Date(note.created_at);
-                $('#NotesListMy').append('<div class="bg-white mb-3 shadow-sm rounded-3">' + '<div class="p-6">' + '<a class="text-decoration-none" href="/note/' + note.id + '"><strong>' + note.title + '</strong></a>' + '<span class="float-end text-secondary">' + createdAt.toLocaleString() + '</span>' + '<span class="float-end mx-3">' + note.author.name + '</span>' + isPrivate + '</div>' + '</div>');
+                $('#NotesListMy').append('<div class="bg-white mb-3 shadow-sm rounded-3">' + '<div class="p-6">' + '<a class="text-decoration-none" href="/note/' + note.id + '"><strong>' + note.title + '</strong></a>' + '<span class="float-end text-secondary">' + createdAt.toLocaleString() + '</span>' + '<span class="float-end mx-3">' + note._author.name + '</span>' + isPrivate + '</div>' + '</div>');
               });
             });
 
           case 3:
-            response = _context2.sent;
-
-          case 4:
           case "end":
             return _context2.stop();
         }
@@ -3905,6 +3937,42 @@ function _getMyNotes() {
     }, _callee2);
   }));
   return _getMyNotes.apply(this, arguments);
+}
+
+function getSharedNotes() {
+  return _getSharedNotes.apply(this, arguments);
+}
+
+function _getSharedNotes() {
+  _getSharedNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
+    var response;
+    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            $('#NotesListShared').html('');
+            _context3.next = 3;
+            return fetch('/api/getSharedNotes', fetchParams).then(function (res) {
+              return res.json();
+            }).then(function (shared) {
+              shared.forEach(function (share) {
+                var isPrivate = share.note["private"] ? '<span class="ml-3 badge rounded-pill bg-dark text-light">Private</span>' : '';
+                var createdAt = new Date(share.note.created_at);
+                $('#NotesListShared').append('<div class="bg-white mb-3 shadow-sm rounded-3">' + '<div class="p-6">' + '<a class="text-decoration-none" href="/note/' + share.note.id + '"><strong>' + share.note.title + '</strong></a>' + '<span class="float-end text-secondary">' + createdAt.toLocaleString() + '</span>' + '<span class="float-end mx-3">' + share.note._author.name + '</span>' + isPrivate + '</div>' + '</div>');
+              });
+            });
+
+          case 3:
+            response = _context3.sent;
+
+          case 4:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+  return _getSharedNotes.apply(this, arguments);
 }
 
 /***/ }),

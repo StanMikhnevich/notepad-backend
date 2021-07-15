@@ -22,7 +22,7 @@ class Note extends Model
         'id' => 'string'
     ];
 
-    public function author()
+    public function _author()
     {
         return $this->belongsTo(User::class, 'author');
     }

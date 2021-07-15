@@ -4,7 +4,7 @@
 
             <form action="{{ route('notes.share') }}" method="POST">
                 @csrf
-                <input type="hidden" name="note_id" value="{{ $id }}">
+                <input type="hidden" name="note_id" value="{{ $note->id }}">
 
                 <div class="modal-header">
                     <h5 class="modal-title">Share Note</h5>
@@ -14,8 +14,10 @@
                 <div class="modal-body">
 
                     <div class="mb-3">
-                        <label for="NoteShareModalTitle" class="form-label">Email</label>
-                        <input id="NoteShareModalTitle" type="email" name="email" class="form-control" placeholder="Email" required>
+                        <label for="NoteShareModalEmail" class="form-label">Email</label>
+                        <input id="NoteShareModalEmail" type="email" name="email" class="form-control" placeholder="Email" required>
+
+                        <div id="NoteShareModalEmailUser" class="text-secondary p-2 text-end"></div>
                     </div>
 
                 </div>

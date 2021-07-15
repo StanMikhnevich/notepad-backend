@@ -6,10 +6,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
+
+use Notification;
+
+use App\Notifications\NoteShareNotification;
 
 use App\Models\User;
 use App\Models\Note;
+use App\Models\NoteShared;
 
 class NoteController extends Controller
 {
@@ -24,35 +28,58 @@ class NoteController extends Controller
         return view('notes.my');
     }
 
-    public function UserNotes()
+    public function sharedNotes()
     {
-        return view('notes.user');
+        return view('notes.shared');
     }
 
 
     public function note($note)
     {
-        $note = Note::find($note);
+        $note = Note::where('id', $note)->with('_author')->first();
 
         if(!$note) {
-            return redirect('/');
+            return redirect('/')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Note is not found']);
         }
 
         if($note->private && !Auth::check()) {
-            return redirect('/');
+            return redirect('/')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Need authentication']);
         }
 
-        return view('notes.note', $note);
+        if(Auth::check()) {
+            if($note->author == Auth::user()->id) {
+                return view('notes.note', [
+                    'note' => $note,
+                    'isAuthor' => true,
+                ]);
+            }
+
+            $canRead = NoteShared::where([['note_id', $note->id], ['user_id', Auth::user()->id]])->get()->isNotEmpty();
+
+            if(!$canRead) {
+                return redirect('/')->with(['notification' => true, 'type' => 'warning', 'msg' => 'This note is private']);
+            }
+        }
+
+
+        return view('notes.note', [
+            'note' => $note,
+            'isAuthor' => false,
+        ]);
     }
 
+    public function edit($note)
+    {
+        // code...
+    }
 
 
     public function getAllNotes(Request $request)
     {
         if(Auth::check()) {
-            $notes = Note::with('author')->get();
+            $notes = Note::with('_author')->get();
         } else {
-            $notes = Note::with('author')->where('private', 0)->get();
+            $notes = Note::with('_author')->where('private', 0)->get();
         }
 
         return $notes;
@@ -60,19 +87,55 @@ class NoteController extends Controller
 
     public function getMyNotes(Request $request)
     {
-        $notes = Note::with('author')->where([['private', 0], ['author', Auth::user()->id]])->get();
+        $notes = Note::with('_author')->where('author', Auth::user()->id)->get();
 
         return $notes;
+    }
+
+    public function getSharedNotes(Request $request)
+    {
+        $shared = NoteShared::where('user_id', Auth::user()->id)->with('note', 'note.author')->get();
+
+        return $shared;
     }
 
 
 
     public function share(Request $request)
     {
+        $sender = Auth::user();
+
+        $user = User::where('email', $request->email)->get()->first();
+        $note = Note::find($request->note_id);
+
+        if(!$user) {
+            return redirect('/my')->with(['notification' => true, 'type' => 'warning', 'msg' => 'User not found']);
+        }
+
+        if($sender->id == $user->id) {
+            return redirect('/my')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Can\'t share with yourself']);
+        }
+
+        if($sender->id != $note->author) {
+            return redirect('/')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Only the author can share the note']);
+        }
 
 
+        NoteShared::create([
+            'note_id' => $request->note_id,
+            'user_id' => $user->id
+        ]);
 
-        return redirect('/my');
+        $notificationData = [
+            'name' => 'Note sharing notification',
+            'action' => 'Check',
+            'url' => url('/note') . '/' . $note->id,
+            'msg' => '<strong>' . $sender->name . '</strong> has been shared note <strong>' . $note->title . '</strong> with you.',
+        ];
+
+        Notification::send($user, new NoteShareNotification($notificationData));
+
+        return redirect('/my')->with(['notification' => true, 'type' => 'success', 'msg' => 'Note is shared with ' . $user->name]);
 
     }
 
