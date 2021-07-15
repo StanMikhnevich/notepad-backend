@@ -39,11 +39,11 @@ class NoteController extends Controller
         $note = Note::where('id', $note)->with('_author')->first();
 
         if(!$note) {
-            return redirect('/')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Note is not found']);
+            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Note is not found']);
         }
 
         if($note->private && !Auth::check()) {
-            return redirect('/')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Need authentication']);
+            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Need authentication']);
         }
 
         if(Auth::check()) {
@@ -56,11 +56,10 @@ class NoteController extends Controller
 
             $canRead = NoteShared::where([['note_id', $note->id], ['user_id', Auth::user()->id]])->get()->isNotEmpty();
 
-            if(!$canRead) {
-                return redirect('/')->with(['notification' => true, 'type' => 'warning', 'msg' => 'This note is private']);
+            if($note->private && !$canRead) {
+                return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'This note is private']);
             }
         }
-
 
         return view('notes.note', [
             'note' => $note,
@@ -70,7 +69,32 @@ class NoteController extends Controller
 
     public function edit($note)
     {
-        // code...
+        $note = Note::where('id', $note)->with('_author')->first();
+
+        if(!$note) {
+            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Note is not found']);
+        }
+
+        if($note->private && !Auth::check()) {
+            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Need authentication']);
+        }
+
+        if(Auth::check()) {
+            if($note->author != Auth::user()->id) {
+                return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Only the author can edit the note']);
+            }
+
+            $shared = NoteShared::where('note_id', $note->id)->with('user')->get();
+
+            return view('notes.edit', [
+                'note' => $note,
+                'shared' => $shared
+            ]);
+
+        }
+
+
+
     }
 
 
@@ -94,7 +118,7 @@ class NoteController extends Controller
 
     public function getSharedNotes(Request $request)
     {
-        $shared = NoteShared::where('user_id', Auth::user()->id)->with('note', 'note.author')->get();
+        $shared = NoteShared::where('user_id', Auth::user()->id)->with('note', 'note._author')->get();
 
         return $shared;
     }
@@ -108,6 +132,12 @@ class NoteController extends Controller
         $user = User::where('email', $request->email)->get()->first();
         $note = Note::find($request->note_id);
 
+        $alreadyShared = NoteShared::where([['note_id', $request->note_id], ['user_id', $user->id]])->get()->isNotEmpty();
+
+        if($alreadyShared) {
+            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'This note already shared with <starong>' . $user->name . '</starong>']);
+        }
+
         if(!$user) {
             return redirect('/my')->with(['notification' => true, 'type' => 'warning', 'msg' => 'User not found']);
         }
@@ -117,7 +147,7 @@ class NoteController extends Controller
         }
 
         if($sender->id != $note->author) {
-            return redirect('/')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Only the author can share the note']);
+            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Only the author can share the note']);
         }
 
 
@@ -139,6 +169,23 @@ class NoteController extends Controller
 
     }
 
+    public function unshare(Request $request)
+    {
+        $notesharing = NoteShared::where([['note_id', $request->note_id], ['user_id', $request->user_id]])->with('note', 'note._author', 'user')->first();
+
+        $notificationData = [
+            'name' => 'Note sharing notification',
+            'msg' => '<strong>' . $notesharing->note->_author->name . '</strong> has stopped sharing the note <strong>' . $notesharing->note->title . '</strong> with you.',
+        ];
+
+        $notesharing->delete();
+
+        Notification::send($notesharing->user, new NoteShareNotification($notificationData));
+
+        return response()->json(['success' => true]);
+
+    }
+
     public function create(Request $request)
     {
         $note = $request->toArray();
@@ -155,15 +202,15 @@ class NoteController extends Controller
 
     public function update(Request $request)
     {
-        // $note = $request->toArray();
-        // unset($note['_token']);
-        // $note['id'] = Str::uuid()->toString();
-        // $note['author'] = Auth::user()->id;
-        // $note['private'] = isset($note['private']);
-        //
-        // Note::create($note);
+        $note = Note::find($request->id);
 
-        return redirect('/my');
+        $note->title = $request->title;
+        $note->text = $request->text;
+        $note->private = isset($request->private);
+
+        $note->save();
+
+        return redirect('/my')->with(['notification' => true, 'type' => 'success', 'msg' => 'Note has been updated']);
 
     }
 }

@@ -32117,6 +32117,10 @@ select{
   min-width: 40px;
 }
 
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
 @media (min-width: 640px){
   .sm\:container{
     width: 100%;

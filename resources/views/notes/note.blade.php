@@ -8,7 +8,8 @@
             @endif
 
             @if($isAuthor)
-            <a class="btn btn-sm shadow-sm bg-white float-end ms-3" href="#" data-bs-toggle="modal" data-bs-target="#NoteShareModal"><i class="bi-share"></i></a>
+            <a class="btn btn-sm shadow-sm bg-white float-end ms-3" href="#" data-bs-toggle="modal" data-bs-target="#NoteShareModal"><i class="bi bi-share"></i></a>
+            <a class="btn btn-sm shadow-sm bg-white float-end ms-3" href="{{ route('notes') . '/note/' . $note->id }}/edit"><i class="bi bi-pencil-square"></i></a>
             @endif
 
             <span class="float-end">{{ $note->created_at }}</span>
@@ -19,7 +20,7 @@
     </x-slot>
 
     <div class="container mt-4">
-        <div id="NotesItem">
+        <div id="NoteItem">
 
             <div class="bg-white mb-3 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">

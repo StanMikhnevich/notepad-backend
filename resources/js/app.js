@@ -56,7 +56,6 @@ const fetchParams = {
 }
 
 
-
 async function getAllNotes() {
     $('#NotesListAll').html('')
 
@@ -130,4 +129,24 @@ async function getSharedNotes() {
             )
         })
     })
+}
+
+window.unshareNote = async function(sharing_id, note_id, user_id) {
+
+    if (confirm('Stop sharing the note with this user ?')) {
+        $.ajax({
+            url: '/api/unshareNote',
+            type: 'POST',
+            data: {note_id, user_id},
+            async: true,
+            headers: {"X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')},
+            dataType: 'JSON',
+            success: (res) => {
+                if(res.success) {
+                    $('#NoteSharingItem' + sharing_id).remove()
+                }
+            }
+        })
+    }
+
 }
