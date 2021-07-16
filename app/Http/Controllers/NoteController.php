@@ -20,35 +20,61 @@ use App\Models\NoteAttachment;
 class NoteController extends Controller
 {
 
+    // Страница со всеми записками
     public function allNotes()
     {
-        return view('notes.notes');
+        $notes = [];
+
+        if(Auth::check()) {
+            $notes = Note::with('_author')->orderBy('created_at', 'desc')->get();
+        } else {
+            $notes = Note::with('_author')->where('private', 0)->orderBy('created_at', 'desc')->get();
+        }
+
+        return view('notes.notes', [
+            'notes' => $notes
+        ]);
     }
 
+    // Страница с записками текущего юзера
     public function myNotes()
     {
-        return view('notes.my');
+        $notes = Note::with('_author')->where('author', Auth::user()->id)->orderBy('created_at', 'desc')->get();
+
+        return view('notes.my', [
+            'notes' => $notes
+        ]);
     }
 
+    // Страница с доступными юзеру записками
     public function sharedNotes()
     {
-        return view('notes.shared');
+        $share = NoteShared::where('user_id', Auth::user()->id)->with('note', 'note._author')->orderBy('created_at', 'desc')->get();
+
+        return view('notes.shared', [
+            'share' => $share
+        ]);
     }
 
-
+    // Страница поиска записок
     public function search(Request $request)
     {
         $notes = [];
 
+        // Проверка наличия запроса для поиска
         if($request->has('search')) {
+
+            // Сокрытие приватных записок от гостей
             if(Auth::check()) {
+                // Аутентифицирован
                 $notes = Note::where('title', 'LIKE', '%' . $request->search . '%')
                 ->orWhere('text', 'LIKE', '%' . $request->search . '%')
-                ->with('_author')->get();
+                ->with('_author')->orderBy('created_at', 'desc')->get();
             } else {
+                // Гость
                 $notes = Note::where([['private', 0], ['title', 'LIKE', '%' . $request->search . '%']])
                 ->orWhere([['private', 0], ['text', 'LIKE', '%' . $request->search . '%']])
-                ->with('_author')->get();
+                ->with('_author')->orderBy('created_at', 'desc')->get();
             }
         }
 
@@ -58,21 +84,31 @@ class NoteController extends Controller
 
     }
 
+    // Страница записки
     public function note($note)
     {
+        // Получение записки с автором и файлами
         $note = Note::where('id', $note)->with('_author', 'attachments')->first();
 
+        // Проверка на наличие записки
         if(!$note) {
             return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Note is not found']);
         }
 
+        // Проверка на наличие доступа гостя к приватной записки
+        // Сделал именно так для того, чтобы все записки были на главной странице
         if($note->private && !Auth::check()) {
             return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Need authentication']);
         }
 
+        // Проверка на аутентификацию юзера
         if(Auth::check()) {
+
+            // Проверка на соответствие юзера автору записки
+            // Сделал для флага isAuthor, чтобы скрыть кнопки (edit, share) и формы (edit) от других юзеров
             if($note->author == Auth::user()->id) {
 
+                // Преобразование markdown
                 $note->text = Str::markdown($note->text);
 
                 return view('notes.note', [
@@ -81,13 +117,14 @@ class NoteController extends Controller
                 ]);
             }
 
+            // Проверка на наличие доступа к приватной записке
             $canRead = NoteShared::where([['note_id', $note->id], ['user_id', Auth::user()->id]])->get()->isNotEmpty();
-
             if($note->private && !$canRead) {
                 return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'This note is private']);
             }
         }
 
+        // Преобразование markdown
         $note->text = Str::markdown($note->text);
 
         return view('notes.note', [
@@ -96,23 +133,30 @@ class NoteController extends Controller
         ]);
     }
 
+    // Страница редактирования записки
     public function edit($note)
     {
         $note = Note::where('id', $note)->with('_author')->first();
 
+        // Проверка на наличие записки
         if(!$note) {
             return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Note is not found']);
         }
 
+        // Проверка на наличие доступа гостя к приватной записки
         if($note->private && !Auth::check()) {
             return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Need authentication']);
         }
 
+        // Проверка на аутентификацию юзера
         if(Auth::check()) {
+
+            // Проверка на соответствие юзера автору записки
             if($note->author != Auth::user()->id) {
-                return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Only the author can edit the note']);
+                return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Only the author can edit this note']);
             }
 
+            // Получение юзеров с доступом к записке
             $shared = NoteShared::where('note_id', $note->id)->with('user')->get();
 
             return view('notes.edit', [
@@ -125,33 +169,7 @@ class NoteController extends Controller
     }
 
 
-    public function getAllNotes(Request $request)
-    {
-        if(Auth::check()) {
-            $notes = Note::with('_author')->get();
-        } else {
-            $notes = Note::with('_author')->where('private', 0)->get();
-        }
-
-        return $notes;
-    }
-
-    public function getMyNotes(Request $request)
-    {
-        $notes = Note::with('_author')->where('author', Auth::user()->id)->get();
-
-        return $notes;
-    }
-
-    public function getSharedNotes(Request $request)
-    {
-        $shared = NoteShared::where('user_id', Auth::user()->id)->with('note', 'note._author')->get();
-
-        return $shared;
-    }
-
-
-
+    // Поделиться записью с юзером
     public function share(Request $request)
     {
         $sender = Auth::user();
@@ -159,30 +177,35 @@ class NoteController extends Controller
         $user = User::where('email', $request->email)->get()->first();
         $note = Note::find($request->note_id);
 
+        // Проверка на наличие юзера
+        if(!$user) {
+            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'User not found']);
+        }
+
+        // Проверка на наличие доступа юзера к записке
         $alreadyShared = NoteShared::where([['note_id', $request->note_id], ['user_id', $user->id]])->get()->isNotEmpty();
 
         if($alreadyShared) {
             return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'This note already shared with <starong>' . $user->name . '</starong>']);
         }
 
-        if(!$user) {
-            return redirect('/my')->with(['notification' => true, 'type' => 'warning', 'msg' => 'User not found']);
-        }
-
+        // Проверка на sharing самому себе
         if($sender->id == $user->id) {
-            return redirect('/my')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Can\'t share with yourself']);
+            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Can\'t share with yourself']);
         }
 
+        // Проверка на sharing чужой записки
         if($sender->id != $note->author) {
             return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Only the author can share the note']);
         }
 
-
+        // Создание sharing
         NoteShared::create([
             'note_id' => $request->note_id,
             'user_id' => $user->id
         ]);
 
+        // Отправка оповещения юзеру
         $notificationData = [
             'name' => 'Note sharing notification',
             'action' => 'Check',
@@ -192,20 +215,22 @@ class NoteController extends Controller
 
         Notification::send($user, new NoteShareNotification($notificationData));
 
-        return redirect('/my')->with(['notification' => true, 'type' => 'success', 'msg' => 'Note is shared with ' . $user->name]);
+        return redirect()->route('notes.my')->with(['notification' => true, 'type' => 'success', 'msg' => 'Note is shared with ' . $user->name]);
 
     }
 
+    // Прекращение доступа к записке
     public function unshare(Request $request)
     {
+        //Удаление sharing
         $notesharing = NoteShared::where([['note_id', $request->note_id], ['user_id', $request->user_id]])->with('note', 'note._author', 'user')->first();
+        $notesharing->delete();
 
+        // Отправка оповещения юзеру
         $notificationData = [
             'name' => 'Note sharing notification',
             'msg' => '<strong>' . $notesharing->note->_author->name . '</strong> has stopped sharing the note <strong>' . $notesharing->note->title . '</strong> with you.',
         ];
-
-        $notesharing->delete();
 
         Notification::send($notesharing->user, new NoteShareNotification($notificationData));
 
@@ -213,11 +238,13 @@ class NoteController extends Controller
 
     }
 
+    // Создание записки
     public function create(Request $request)
     {
-        // dd($request->attachment);
+        // Генерация UUIDv4 для записки
         $note_id = Str::uuid()->toString();
 
+        // Создание записки
         $note = Note::create([
             'id' => $note_id,
             'author' => Auth::user()->id,
@@ -226,12 +253,17 @@ class NoteController extends Controller
             'private' => isset($request->private)
         ]);
 
+        // Проверка на наличие attachment
         if($request->hasfile('attachment')) {
 
+            // Сохранение каждого файла в папку и в БД
             foreach ($request->file('attachment') as $file) {
+                // Сборка названия файла
+                // <UNIX time>_<UUIDv4>_<Имя файла>
                 $name = time() . '_' . $note_id . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs('note_attachments', $name, 'public');
 
+                // Создание записи в БД
                 NoteAttachment::create([
                     'note_id' => $note_id,
                     '_name' => $file->getClientOriginalName(),
@@ -247,8 +279,10 @@ class NoteController extends Controller
 
     }
 
+    //Обновление записки
     public function update(Request $request)
     {
+        // Обновление записки
         $note = Note::find($request->id);
 
         $note->title = $request->title;
@@ -257,12 +291,17 @@ class NoteController extends Controller
 
         $note->save();
 
+        // Проверка на наличие attachment
         if($request->hasfile('attachment')) {
 
+            // Сохранение каждого файла в папку и в БД
             foreach ($request->file('attachment') as $file) {
+                // Сборка названия файла
+                // <UNIX time>_<UUIDv4>_<Имя файла>
                 $name = time() . '_' . $request->id . '_' . $file->getClientOriginalName();
                 $path = $file->storeAs('note_attachments', $name, 'public');
 
+                // Создание записи в БД
                 NoteAttachment::create([
                     'note_id' => $request->id,
                     '_name' => $file->getClientOriginalName(),
@@ -279,17 +318,24 @@ class NoteController extends Controller
 
     }
 
+    // Удаление прикрепленного файла записки
     public function deleteNoteAttachment(Request $request)
     {
+        // Получение прикрепления файла
         $attachment = NoteAttachment::find($request->file_id);
 
+        // Проверка успешного удаления файла
         if(Storage::delete('public/' . $attachment->path)) {
 
+            // Удаление записи из БД
             $attachment->delete();
+
+            // Вывод сообщения
             return response()->json(['success' => true]);
 
         }
 
+        // Вывод сообщения
         return response()->json(['success' => false]);
 
     }

@@ -8,6 +8,8 @@ use App\Models\User;
 
 class UserController extends Controller
 {
+
+    // Проверка наличия юзера по email
     public function checkUserByEmail(Request $req)
     {
         $user = User::where('email', $req->email)->get()->first();
