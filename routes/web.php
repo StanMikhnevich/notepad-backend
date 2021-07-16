@@ -17,9 +17,6 @@ Route::get('/', 'NoteController@allNotes')->name('notes');
 Route::get('/search', 'NoteController@search')->name('notes.search');
 Route::get('/note/{note}', 'NoteController@note');
 
-Route::post('/api/getAllNotes', 'NoteController@getAllNotes');
-
-
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -28,17 +25,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/my', 'NoteController@myNotes')->name('notes.my');
     Route::get('/shared', 'NoteController@sharedNotes')->name('notes.shared');
 
+
     Route::post('/notes/share', 'NoteController@share')->name('notes.share');
     Route::post('/notes/create', 'NoteController@create')->name('notes.create');
     Route::post('/notes/update', 'NoteController@update')->name('notes.update');
     Route::post('/notes/delete', 'NoteController@delete')->name('notes.delete');
 
 
-
-    Route::post('/api/getMyNotes', 'NoteController@getMyNotes');
-    Route::post('/api/getSharedNotes', 'NoteController@getSharedNotes');
-
     Route::post('/api/checkUserByEmail', 'UserController@checkUserByEmail');
+
 
     Route::post('/api/unshareNote', 'NoteController@unshare');
     Route::post('/api/deleteNoteAttachment', 'NoteController@deleteNoteAttachment');

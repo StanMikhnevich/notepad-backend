@@ -26,6 +26,11 @@ class NoteController extends Controller
         $notes = [];
 
         if(Auth::check()) {
+
+            if(!isset(Auth::user()->email_verified_at)) {
+                return redirect()->route('verification.notice');
+            }
+
             $notes = Note::with('_author')->orderBy('created_at', 'desc')->get();
         } else {
             $notes = Note::with('_author')->where('private', 0)->orderBy('created_at', 'desc')->get();
