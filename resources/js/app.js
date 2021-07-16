@@ -150,3 +150,23 @@ window.unshareNote = async function(sharing_id, note_id, user_id) {
     }
 
 }
+
+window.deleteNoteAttachment = async function(file_id, file_name) {
+
+    if (confirm('Delete ' + file_name + ' from note attachments ?')) {
+        $.ajax({
+            url: '/api/deleteNoteAttachment',
+            type: 'POST',
+            data: {file_id},
+            async: true,
+            headers: {"X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')},
+            dataType: 'JSON',
+            success: (res) => {
+                if(res.success) {
+                    $('#NoteAttachmentItem' + file_id).remove()
+                }
+            }
+        })
+    }
+
+}

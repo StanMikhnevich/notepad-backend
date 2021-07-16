@@ -27,4 +27,9 @@ class Note extends Model
         return $this->belongsTo(User::class, 'author');
     }
 
+    public function attachments()
+    {
+        return $this->hasMany(NoteAttachment::class);
+    }
+
 }

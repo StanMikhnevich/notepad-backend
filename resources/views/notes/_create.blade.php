@@ -1,8 +1,8 @@
 <div class="modal fade" id="NoteCreateModal" tabindex="-1" aria-labelledby="NoteCreateModal" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
 
-            <form action="{{ route('notes.create') }}" method="POST">
+            <form action="{{ route('notes.create') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
                 <div class="modal-header">
@@ -20,6 +20,11 @@
                     <div class="mb-3">
                         <label for="NoteCreateModalText" class="form-label">Text</label>
                         <textarea id="NoteCreateModalText" name="text" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="NoteCreateModalAttachment" class="form-label">Attach files</label>
+                        <input id="NoteCreateModalAttachment" class="form-control" type="file" name="attachment[]" multiple>
                     </div>
 
                     <div class="form-check">

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 use Notification;
 
@@ -14,6 +15,7 @@ use App\Notifications\NoteShareNotification;
 use App\Models\User;
 use App\Models\Note;
 use App\Models\NoteShared;
+use App\Models\NoteAttachment;
 
 class NoteController extends Controller
 {
@@ -58,7 +60,7 @@ class NoteController extends Controller
 
     public function note($note)
     {
-        $note = Note::where('id', $note)->with('_author')->first();
+        $note = Note::where('id', $note)->with('_author', 'attachments')->first();
 
         if(!$note) {
             return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Note is not found']);
@@ -213,13 +215,33 @@ class NoteController extends Controller
 
     public function create(Request $request)
     {
-        $note = $request->toArray();
-        unset($note['_token']);
-        $note['id'] = Str::uuid()->toString();
-        $note['author'] = Auth::user()->id;
-        $note['private'] = isset($note['private']);
+        // dd($request->attachment);
+        $note_id = Str::uuid()->toString();
 
-        Note::create($note);
+        $note = Note::create([
+            'id' => $note_id,
+            'author' => Auth::user()->id,
+            'title' => $request->title,
+            'text' => $request->text,
+            'private' => isset($request->private)
+        ]);
+
+        if($request->hasfile('attachment')) {
+
+            foreach ($request->file('attachment') as $file) {
+                $name = time() . '_' . $note_id . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('note_attachments', $name, 'public');
+
+                NoteAttachment::create([
+                    'note_id' => $note_id,
+                    '_name' => $file->getClientOriginalName(),
+                    'name' => $name,
+                    'path' => $path
+                ]);
+
+            }
+
+        }
 
         return redirect()->route('notes.my');
 
@@ -235,7 +257,40 @@ class NoteController extends Controller
 
         $note->save();
 
+        if($request->hasfile('attachment')) {
+
+            foreach ($request->file('attachment') as $file) {
+                $name = time() . '_' . $request->id . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('note_attachments', $name, 'public');
+
+                NoteAttachment::create([
+                    'note_id' => $request->id,
+                    '_name' => $file->getClientOriginalName(),
+                    'name' => $name,
+                    'path' => $path
+                ]);
+
+            }
+
+        }
+
+
         return redirect(route('notes') . '/note/' . $note->id)->with(['notification' => true, 'type' => 'success', 'msg' => 'Note has been updated']);
+
+    }
+
+    public function deleteNoteAttachment(Request $request)
+    {
+        $attachment = NoteAttachment::find($request->file_id);
+
+        if(Storage::delete('public/' . $attachment->path)) {
+
+            $attachment->delete();
+            return response()->json(['success' => true]);
+
+        }
+
+        return response()->json(['success' => false]);
 
     }
 }

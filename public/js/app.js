@@ -3876,14 +3876,14 @@ function getAllNotes() {
 }
 
 function _getAllNotes() {
-  _getAllNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
+  _getAllNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
     var response;
-    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
+    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
       while (1) {
-        switch (_context2.prev = _context2.next) {
+        switch (_context3.prev = _context3.next) {
           case 0:
             $('#NotesListAll').html('');
-            _context2.next = 3;
+            _context3.next = 3;
             return fetch('/api/getAllNotes', fetchParams).then(function (res) {
               return res.json();
             }).then(function (notes) {
@@ -3895,14 +3895,14 @@ function _getAllNotes() {
             });
 
           case 3:
-            response = _context2.sent;
+            response = _context3.sent;
 
           case 4:
           case "end":
-            return _context2.stop();
+            return _context3.stop();
         }
       }
-    }, _callee2);
+    }, _callee3);
   }));
   return _getAllNotes.apply(this, arguments);
 }
@@ -3912,13 +3912,13 @@ function getMyNotes() {
 }
 
 function _getMyNotes() {
-  _getMyNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3() {
-    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
+  _getMyNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee4() {
+    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee4$(_context4) {
       while (1) {
-        switch (_context3.prev = _context3.next) {
+        switch (_context4.prev = _context4.next) {
           case 0:
             $('#NotesListMy').html('');
-            _context3.next = 3;
+            _context4.next = 3;
             return fetch('/api/getMyNotes', fetchParams).then(function (res) {
               return res.json();
             }).then(function (notes) {
@@ -3931,10 +3931,10 @@ function _getMyNotes() {
 
           case 3:
           case "end":
-            return _context3.stop();
+            return _context4.stop();
         }
       }
-    }, _callee3);
+    }, _callee4);
   }));
   return _getMyNotes.apply(this, arguments);
 }
@@ -3944,14 +3944,14 @@ function getSharedNotes() {
 }
 
 function _getSharedNotes() {
-  _getSharedNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee4() {
+  _getSharedNotes = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee5() {
     var response;
-    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee4$(_context4) {
+    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee5$(_context5) {
       while (1) {
-        switch (_context4.prev = _context4.next) {
+        switch (_context5.prev = _context5.next) {
           case 0:
             $('#NotesListShared').html('');
-            _context4.next = 3;
+            _context5.next = 3;
             return fetch('/api/getSharedNotes', fetchParams).then(function (res) {
               return res.json();
             }).then(function (shared) {
@@ -3963,14 +3963,14 @@ function _getSharedNotes() {
             });
 
           case 3:
-            response = _context4.sent;
+            response = _context5.sent;
 
           case 4:
           case "end":
-            return _context4.stop();
+            return _context5.stop();
         }
       }
-    }, _callee4);
+    }, _callee5);
   }));
   return _getSharedNotes.apply(this, arguments);
 }
@@ -4012,6 +4012,45 @@ window.unshareNote = /*#__PURE__*/function () {
 
   return function (_x, _x2, _x3) {
     return _ref.apply(this, arguments);
+  };
+}();
+
+window.deleteNoteAttachment = /*#__PURE__*/function () {
+  var _ref2 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2(file_id, file_name) {
+    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            if (confirm('Delete ' + file_name + ' from note attachments ?')) {
+              $.ajax({
+                url: '/api/deleteNoteAttachment',
+                type: 'POST',
+                data: {
+                  file_id: file_id
+                },
+                async: true,
+                headers: {
+                  "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')
+                },
+                dataType: 'JSON',
+                success: function success(res) {
+                  if (res.success) {
+                    $('#NoteAttachmentItem' + file_id).remove();
+                  }
+                }
+              });
+            }
+
+          case 1:
+          case "end":
+            return _context2.stop();
+        }
+      }
+    }, _callee2);
+  }));
+
+  return function (_x4, _x5) {
+    return _ref2.apply(this, arguments);
   };
 }();
 

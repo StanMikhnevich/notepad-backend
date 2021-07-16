@@ -28,6 +28,16 @@
                 </div>
             </div>
 
+            @if(isset($note->attachments[0]))
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 bg-white border-b border-gray-200">
+                    @foreach ($note->attachments as $file)
+                        <a href="{{ asset('storage/' . $file->path) }}" target="_blank" class="badge bg-dark text-decoration-none text-light p-3 me-1 mb-1"><i class="bi bi-paperclip me-3"></i>{{ $file->_name }}</a>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
         </div>
     </div>
 
