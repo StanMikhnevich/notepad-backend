@@ -70,6 +70,9 @@ class NoteController extends Controller
 
         if(Auth::check()) {
             if($note->author == Auth::user()->id) {
+
+                $note->text = Str::markdown($note->text);
+
                 return view('notes.note', [
                     'note' => $note,
                     'isAuthor' => true,
@@ -82,6 +85,8 @@ class NoteController extends Controller
                 return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'This note is private']);
             }
         }
+
+        $note->text = Str::markdown($note->text);
 
         return view('notes.note', [
             'note' => $note,
@@ -114,8 +119,6 @@ class NoteController extends Controller
             ]);
 
         }
-
-
 
     }
 
@@ -218,7 +221,7 @@ class NoteController extends Controller
 
         Note::create($note);
 
-        return redirect('/my');
+        return redirect()->route('notes.my');
 
     }
 
@@ -232,7 +235,7 @@ class NoteController extends Controller
 
         $note->save();
 
-        return redirect('/my')->with(['notification' => true, 'type' => 'success', 'msg' => 'Note has been updated']);
+        return redirect(route('notes') . '/note/' . $note->id)->with(['notification' => true, 'type' => 'success', 'msg' => 'Note has been updated']);
 
     }
 }
