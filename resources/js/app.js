@@ -125,6 +125,7 @@ window.deleteNote = async function(id, title) {
             headers: {"X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')},
             dataType: 'JSON',
             success: (res) => {
+                console.log(res)
                 if(res.success) {
                     $('#NoteItem' + id).remove()
                 }

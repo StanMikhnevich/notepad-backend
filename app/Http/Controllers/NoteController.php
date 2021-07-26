@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
@@ -55,9 +56,10 @@ class NoteController extends Controller
             'msg' => 'Note has been updated',
         ],
         'note.deleted' => [
+            'success' => true,
             'notification' => true,
-            'type' => 'warning',
-            'msg' => 'Note has been updated',
+            'type' => 'success',
+            'msg' => 'Note has been deleted',
         ],
         'note.share.exists' => [
             'notification' => true,
@@ -212,11 +214,14 @@ class NoteController extends Controller
      * Edit note
      *
      * @param BaseFormRequest $request
-     * @param $note
+     * @param Note $note
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function edit(BaseFormRequest $request, Note $note)
     {
+        $this->authorize('edit', $note);
+
         $shared = [];
 
         // Checking note existence
@@ -231,11 +236,6 @@ class NoteController extends Controller
 
         // Checking authenticated user
         if ($request->isAuthenticated()) {
-            // Checking note ownership
-            // isOwner flag hides edit & share buttons and modals from other users
-            if ($note->user_id != $request->authUserStrict()->id) {
-                return redirect(route('notes.index'))->with($this->messages['note.owned']);
-            }
 
             // Getting users with access to note
             $shared = NoteShared::where('note_id', $note->id)->with('user')->get();
@@ -277,41 +277,41 @@ class NoteController extends Controller
      * Remove the specified resource from storage.
      *
      * @param BaseFormRequest $request
-     * @param $id
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function destroy(BaseFormRequest $request, Note $note)
+    public function destroy(BaseFormRequest $request): JsonResponse
     {
-        dd($note);
-
-//        $note = Note::find($request->input('id'));
-        $note = Note::find($id);
-
-        $this->authorize('delete', [$note]);
+        $note = Note::find($request->input('id'));
 
         // Checking target note existence
         if (!$note) {
             return response()->json($this->messages['note.empty']);
         }
 
-        // Checking sender is owner of the note
-        if ($note->user_id != $request->authUserStrict()->id) {
-            return response()->json($this->messages['note.owned']);
-        }
+        $this->authorize('delete', [$note]);
 
         // Delete note attachments
-        if($note->attachments->isNotEmpty())
-
+        if ($note->hasAttachments()) {
             foreach ($note->attachments as $att) {
-                // Checking file successfully deleted
-                if(Storage::exists())
-                    if (Storage::delete('public/' . $att->path)) {
+                if(Storage::disk('public')->exists($att->path)) {
+                    if (Storage::disk('public')->delete($att->path)) {
                         $att->delete();
                     }
+                }
             }
+        }
+
+        // Delete note sharing
+        if ($note->isShared()) {
+            foreach ($note->shared as $sharing) {
+                $sharing->delete();
+            }
+        }
 
         $note->delete();
+
+        return response()->json($this->messages['note.deleted']);
     }
 
 
@@ -335,8 +335,8 @@ class NoteController extends Controller
 //            $conditions[] = ['user_id', $request->authUserStrict()->id];
 
             // Checking user auth
-            if (!$request->isAuthenticated()) {
-            }
+//            if (!$request->isAuthenticated()) {
+//            }
 
             // Getting notes
             $notes = $notes->where($conditions);
@@ -387,11 +387,6 @@ class NoteController extends Controller
             return redirect(route('notes.show', $note->uid))->with($this->messages['note.share.self']);
         }
 
-        // Checking sender is owner of the note
-        if ($sender->id != $note->user_id) {
-            return redirect(route('notes.show', $note->uid))->with($this->messages['note.owned']);
-        }
-
         // Creating of sharing
         NoteShared::create([
             'note_id' => $request->note_id,
@@ -414,20 +409,25 @@ class NoteController extends Controller
      *
      * @param BaseFormRequest $request
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function unshare(BaseFormRequest $request)
+    public function unshare(BaseFormRequest $request): JsonResponse
     {
+
         // Remove sharing note
-        $notesharing = NoteShared::where([
+        $sharing = NoteShared::where([
             ['note_id', $request->input('note_id')],
             ['user_id', $request->input('user_id')]
         ])->with('note', 'user')->first();
-        $notesharing->delete();
+
+        $this->authorize('unshare', $sharing->note);
+
+        $sharing->delete();
 
         // Notification user via email
-        Notification::send($notesharing->user, new NoteShareNotification([
+        Notification::send($sharing->user, new NoteShareNotification([
             'name' => 'Note sharing notification',
-            'msg' => '<strong>' . $request->authUserStrict()->name . '</strong> has stopped sharing the note <strong>' . $notesharing->note->title . '</strong> with you.',
+            'msg' => '<strong>' . $request->authUserStrict()->name . '</strong> has stopped sharing the note <strong>' . $sharing->note->title . '</strong> with you.',
         ]));
 
         return response()->json(['success' => true]);
@@ -438,14 +438,17 @@ class NoteController extends Controller
      *
      * @param BaseFormRequest $request
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function deleteNoteAttachment(BaseFormRequest $request)
+    public function deleteNoteAttachment(BaseFormRequest $request): JsonResponse
     {
         // Get note attachment
         $attachment = NoteAttachment::find($request->file_id);
 
+        $this->authorize('delete_attachment', $attachment->note);
+
         // Checking file successfully deleted
-        if (Storage::delete('public/' . $attachment->path)) {
+        if (Storage::disk('public')->delete($attachment->path)) {
             $attachment->delete();
 
             return response()->json(['success' => true]);

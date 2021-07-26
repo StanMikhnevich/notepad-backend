@@ -16,15 +16,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\Note $note
  * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder|NoteShared create($value)
  * @method static \Illuminate\Database\Eloquent\Builder|NoteShared newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|NoteShared newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|NoteShared query()
  * @method static \Illuminate\Database\Eloquent\Builder|NoteShared whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|NoteShared where(...$value)
  * @method static \Illuminate\Database\Eloquent\Builder|NoteShared whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|NoteShared whereNoteId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|NoteShared whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|NoteShared whereUserId($value)
- * @mixin \Eloquent
  */
 class NoteShared extends Model
 {

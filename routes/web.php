@@ -29,8 +29,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/checkUserByEmail', 'UserController@checkUserByEmail');
 
     Route::post('/api/unshareNote', 'NoteController@unshare');
-//    Route::post('/api/deleteNote', 'NoteController@destroy');
-//    Route::post('/api/deleteNoteAttachment', 'NoteController@deleteNoteAttachment');
+    Route::post('/api/deleteNote', 'NoteController@destroy');
+    Route::post('/api/deleteNoteAttachment', 'NoteController@deleteNoteAttachment');
 });
 
 require __DIR__.'/auth.php';

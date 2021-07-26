@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
 
@@ -29,6 +30,8 @@ use Illuminate\Support\Str;
  * @method static \Illuminate\Database\Eloquent\Builder|Note newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Note query()
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Note find($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Note where(...$value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note wherePrivate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereText($value)
@@ -88,6 +91,27 @@ class Note extends Model
     {
         return $this->hasMany(NoteAttachment::class);
     }
+
+    /**
+     * Check note attachments existence
+     *
+     * @return bool
+     */
+    public function hasAttachments(): bool
+    {
+        return (bool) $this->attachments->isNotEmpty();
+    }
+
+    /**
+     * Check note sharing existence
+     *
+     * @return bool
+     */
+    public function isShared(): bool
+    {
+        return (bool) $this->shared->isNotEmpty();
+    }
+
 
     public function attachFile(?array $files)
     {

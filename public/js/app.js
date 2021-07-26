@@ -3988,6 +3988,8 @@ window.deleteNote = /*#__PURE__*/function () {
                 },
                 dataType: 'JSON',
                 success: function success(res) {
+                  console.log(res);
+
                   if (res.success) {
                     $('#NoteItem' + id).remove();
                   }

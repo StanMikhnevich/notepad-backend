@@ -31,6 +31,17 @@
                             <i class="bi bi-lock-fill text-gray-500 ms-3"></i>
                         @endif
 
+                        @if($note->hasAttachments())
+                            <i class="bi bi-paperclip text-gray-500 ms-3"></i>
+                        @endif
+
+                        @if(($filters['show'] ?? '') == 'my')
+                            @if($note->isShared())
+                            <i class="bi bi-share text-gray-500 ms-3"></i>
+                            @endif
+                        @endif
+
+
                         <div class="float-end">
                             <span>{{ $note->user->name }}</span>
 

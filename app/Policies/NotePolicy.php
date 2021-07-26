@@ -14,7 +14,7 @@ class NotePolicy
      * Determine whether the user can view any models.
      *
      * @param  \App\Models\User  $user
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @return bool
      */
     public function viewAny(User $user)
     {
@@ -46,6 +46,18 @@ class NotePolicy
     }
 
     /**
+     * Determine whether the user can edit the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Note  $note
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function edit(User $user, Note $note): bool
+    {
+        return (bool) $note->user_id == $user->id;
+    }
+
+    /**
      * Determine whether the user can update the model.
      *
      * @param  \App\Models\User  $user
@@ -54,7 +66,7 @@ class NotePolicy
      */
     public function update(User $user, Note $note): bool
     {
-        return $note->user_id == $user->id;
+        return (bool) $note->user_id == $user->id;
     }
 
     /**
@@ -66,7 +78,7 @@ class NotePolicy
      */
     public function delete(User $user, Note $note): bool
     {
-        return $note->user_id == $user->id;
+        return (bool) $note->user_id == $user->id;
     }
 
     /**
@@ -76,9 +88,33 @@ class NotePolicy
      * @param  \App\Models\Note  $note
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function share(User $user, Note $note)
+    public function share(User $user, Note $note): bool
     {
-        return $note->user_id == $user->id;
+        return (bool) $note->user_id == $user->id;
+    }
+
+    /**
+     * Determine whether the user can unshare the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Note  $note
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function unshare(User $user, Note $note): bool
+    {
+        return (bool) $note->user_id == $user->id;
+    }
+
+    /**
+     * Determine whether the user can delete attachments of the model.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Note  $note
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function delete_attachment(User $user, Note $note): bool
+    {
+        return (bool) $note->user_id == $user->id;
     }
 
     /**
@@ -88,8 +124,8 @@ class NotePolicy
      * @param  \App\Models\Note  $note
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function forceDelete(User $user, Note $note)
+    public function forceDelete(User $user, Note $note): bool
     {
-        //
+        return (bool) $note->user_id == $user->id;
     }
 }
