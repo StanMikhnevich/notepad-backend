@@ -5,6 +5,10 @@ require('alpinejs');
 
 $(document).ready(function() {
 
+    if($('.alert').length) {
+        $('.alert').delay(2000).slideUp(500);
+    }
+
     // Проверка наличия юзера по email
     // Минимум 5 симолов для запросов
     $('#NoteShareModalEmail').on('keyup keypress change mouseout', function() {
@@ -73,6 +77,13 @@ window.unshareNote = async function(sharing_id, note_id, user_id) {
 
 // Удаление прикрелённого к записки файла
 // Глобальная функция. Чтобы использовать сразу из шаблона
+
+/**
+ *
+ * @param file_id
+ * @param file_name
+ * @returns {Promise<void>}
+ */
 window.deleteNoteAttachment = async function(file_id, file_name) {
 
     if (confirm('Delete ' + file_name + ' from note attachments ?')) {
@@ -86,6 +97,36 @@ window.deleteNoteAttachment = async function(file_id, file_name) {
             success: (res) => {
                 if(res.success) {
                     $('#NoteAttachmentItem' + file_id).remove()
+                }
+            }
+        })
+    }
+
+}
+
+// Удаление записки файла
+// Глобальная функция. Чтобы использовать сразу из шаблона
+
+/**
+ * Delete note (AJAX)
+ *
+ * @param id
+ * @param title
+ * @returns {Promise<void>}
+ */
+window.deleteNote = async function(id, title) {
+
+    if (confirm('Delete ' + title + ' from notes ?')) {
+        $.ajax({
+            url: '/api/deleteNote',
+            type: 'POST',
+            data: {id},
+            async: true,
+            headers: {"X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')},
+            dataType: 'JSON',
+            success: (res) => {
+                if(res.success) {
+                    $('#NoteItem' + id).remove()
                 }
             }
         })

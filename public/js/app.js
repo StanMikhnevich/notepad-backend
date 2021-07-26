@@ -3824,8 +3824,12 @@ __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
 __webpack_require__(/*! alpinejs */ "./node_modules/alpinejs/dist/alpine.js");
 
 $(document).ready(function () {
-  // Проверка наличия юзера по email
+  if ($('.alert').length) {
+    $('.alert').delay(2000).slideUp(500);
+  } // Проверка наличия юзера по email
   // Минимум 5 симолов для запросов
+
+
   $('#NoteShareModalEmail').on('keyup keypress change mouseout', function () {
     var _this = this;
 
@@ -3908,6 +3912,13 @@ window.unshareNote = /*#__PURE__*/function () {
 }(); // Удаление прикрелённого к записки файла
 // Глобальная функция. Чтобы использовать сразу из шаблона
 
+/**
+ *
+ * @param file_id
+ * @param file_name
+ * @returns {Promise<void>}
+ */
+
 
 window.deleteNoteAttachment = /*#__PURE__*/function () {
   var _ref2 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2(file_id, file_name) {
@@ -3945,6 +3956,55 @@ window.deleteNoteAttachment = /*#__PURE__*/function () {
 
   return function (_x4, _x5) {
     return _ref2.apply(this, arguments);
+  };
+}(); // Удаление записки файла
+// Глобальная функция. Чтобы использовать сразу из шаблона
+
+/**
+ * Delete note (AJAX)
+ *
+ * @param id
+ * @param title
+ * @returns {Promise<void>}
+ */
+
+
+window.deleteNote = /*#__PURE__*/function () {
+  var _ref3 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3(id, title) {
+    return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            if (confirm('Delete ' + title + ' from notes ?')) {
+              $.ajax({
+                url: '/api/deleteNote',
+                type: 'POST',
+                data: {
+                  id: id
+                },
+                async: true,
+                headers: {
+                  "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')
+                },
+                dataType: 'JSON',
+                success: function success(res) {
+                  if (res.success) {
+                    $('#NoteItem' + id).remove();
+                  }
+                }
+              });
+            }
+
+          case 1:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+
+  return function (_x6, _x7) {
+    return _ref3.apply(this, arguments);
   };
 }();
 

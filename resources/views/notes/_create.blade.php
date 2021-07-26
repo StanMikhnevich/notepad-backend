@@ -2,7 +2,7 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
 
-            <form action="{{ route('notes.create') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('notes.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
                 <div class="modal-header">
@@ -14,17 +14,17 @@
 
                     <div class="mb-3">
                         <label for="NoteCreateModalTitle" class="form-label">Title</label>
-                        <input id="NoteCreateModalTitle" type="text" name="title" class="form-control" placeholder="Title" required>
+                        <input id="NoteCreateModalTitle" type="text" name="title" class="form-control form-control-lg" placeholder="Title" required>
                     </div>
 
                     <div class="mb-3">
                         <label for="NoteCreateModalText" class="form-label">Text</label>
-                        <textarea id="NoteCreateModalText" name="text" class="form-control" rows="3" required></textarea>
+                        <textarea id="NoteCreateModalText" name="text" class="form-control form-control-lg" rows="8" required></textarea>
                     </div>
 
                     <div class="mb-3">
                         <label for="NoteCreateModalAttachment" class="form-label">Attach files</label>
-                        <input id="NoteCreateModalAttachment" class="form-control" type="file" name="attachment[]" multiple>
+                        <input id="NoteCreateModalAttachment" class="form-control form-control-lg" type="file" name="attachment[]" accept="text/*,image/*,audio/*,video/*" multiple>
                     </div>
 
                     <div class="form-check">
@@ -37,8 +37,8 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-link" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-lg btn-link" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-lg btn-primary">Save changes</button>
                 </div>
 
             </form>

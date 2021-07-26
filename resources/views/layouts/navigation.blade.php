@@ -5,27 +5,26 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="flex-shrink-0 flex items-center">
-                    <a href="{{ route('notes') }}">
+                    <a href="{{ route('notes.public') }}">
                         <x-application-logo class="block h-10 w-auto fill-current text-gray-600" />
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-nav-link class="text-decoration-none" :href="route('notes')" :active="request()->routeIs('notes')">
-                        {{ __('Notes') }}
+                    <x-nav-link class="no-underline" :href="route('notes.public')" :active="request()->input('show') == 'public'">
+                        {{ __('Public') }}
                     </x-nav-link>
 
                     @auth
-                    <x-nav-link class="text-decoration-none" :href="route('notes.my')" :active="request()->routeIs('notes.my')">
-                        {{ __('My notes') }}
+                    <x-nav-link class="no-underline" :href="route('notes.my')" :active="request()->input('show') == 'my'">
+                        {{ __('My') }}
                     </x-nav-link>
 
-                    <x-nav-link class="text-decoration-none" :href="route('notes.shared')" :active="request()->routeIs('notes.shared')">
-                        {{ __('Shared notes') }}
+                    <x-nav-link class="no-underline" :href="route('notes.shared')" :active="request()->input('show') == 'shared'">
+                        {{ __('Shared') }}
                     </x-nav-link>
                     @endauth
-
                 </div>
 
                 <form action="{{ route('notes.search') }}" method="GET">
@@ -66,10 +65,12 @@
                     </x-slot>
                 </x-dropdown>
             @else
-                <a href="{{ route('login') }}" class="text-sm text-gray-700">Log in</a>
+                @if (Route::has('login'))
+                <a href="{{ route('login') }}" class="text-sm text-gray-700 no-underline">Log in</a>
+                @endif
 
                 @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="ml-4 text-sm text-gray-700">Register</a>
+                <a href="{{ route('register') }}" class="ml-4 text-sm text-gray-700 no-underline">Register</a>
                 @endif
             @endauth
 

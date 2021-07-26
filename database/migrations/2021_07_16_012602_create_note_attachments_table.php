@@ -15,8 +15,8 @@ class CreateNoteAttachmentsTable extends Migration
     {
         Schema::create('note_attachments', function (Blueprint $table) {
             $table->id();
-            $table->char('note_id', 36);
-            $table->string('_name');
+            $table->integer('note_id');
+            $table->string('original');
             $table->string('name');
             $table->string('path');
             $table->timestamps();

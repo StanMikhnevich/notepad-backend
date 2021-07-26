@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
 
-use Notification;
+use App\Http\Requests\BaseFormRequest;
+
+use App\Http\Requests\Notes\StoreNoteRequest;
+use App\Http\Requests\Notes\UpdateNoteRequest;
 
 use App\Notifications\NoteShareNotification;
 
@@ -20,328 +23,435 @@ use App\Models\NoteAttachment;
 class NoteController extends Controller
 {
 
-    // Страница со всеми записками
-    public function allNotes()
+    protected $messages = [
+        'user.empty' => [
+            'notification' => true,
+            'type' => 'warning',
+            'msg' => 'User is not found',
+        ],
+        'note.empty' => [
+            'notification' => true,
+            'type' => 'warning',
+            'msg' => 'Note is not found',
+        ],
+        'note.available' => [
+            'notification' => true,
+            'type' => 'warning',
+            'msg' => 'Need authentication',
+        ],
+        'note.private' => [
+            'notification' => true,
+            'type' => 'warning',
+            'msg' => 'This note is private',
+        ],
+        'note.owned' => [
+            'notification' => true,
+            'type' => 'warning',
+            'msg' => 'Only the author can edit this note',
+        ],
+        'note.updated' => [
+            'notification' => true,
+            'type' => 'success',
+            'msg' => 'Note has been updated',
+        ],
+        'note.deleted' => [
+            'notification' => true,
+            'type' => 'warning',
+            'msg' => 'Note has been updated',
+        ],
+        'note.share.exists' => [
+            'notification' => true,
+            'type' => 'warning',
+            'msg' => 'This note is already shared with this user',
+        ],
+        'note.share.self' => [
+            'notification' => true,
+            'type' => 'warning',
+            'msg' => 'Can\'t share with yourself',
+        ],
+        'note.share.done' => [
+            'notification' => true,
+            'type' => 'success',
+            'msg' => 'Note was shared with user',
+        ],
+    ];
+
+    /**
+     * Show all|my|shared notes
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function index(BaseFormRequest $request)
     {
-        $notes = [];
+        $notes = Note::query()->with('user')->latest();
+        $filters = $request->only('show');
 
-        if(Auth::check()) {
-
-            if(!isset(Auth::user()->email_verified_at)) {
-                return redirect()->route('verification.notice');
-            }
-
-            $notes = Note::with('_author')->orderBy('created_at', 'desc')->get();
-        } else {
-            $notes = Note::with('_author')->where('private', 0)->orderBy('created_at', 'desc')->get();
+        // Show shared notes
+        if (($filters['show'] ?? '') == 'shared') {
+            $notes = $notes->whereHas('shared', function (Builder $builder) use ($request) {
+                $builder->where('user_id', $request->authUserStrict()->id);
+            });
         }
 
-        return view('notes.notes', [
-            'notes' => $notes
-        ]);
-    }
+        // Show my notes
+        if (($filters['show'] ?? '') == 'my') {
+            $notes = $request->authUserStrict()->notes();
+        }
 
-    // Страница с записками текущего юзера
-    public function myNotes()
-    {
-        $notes = Note::with('_author')->where('author', Auth::user()->id)->orderBy('created_at', 'desc')->get();
-
-        return view('notes.my', [
-            'notes' => $notes
-        ]);
-    }
-
-    // Страница с доступными юзеру записками
-    public function sharedNotes()
-    {
-        $share = NoteShared::where('user_id', Auth::user()->id)->with('note', 'note._author')->orderBy('created_at', 'desc')->get();
-
-        return view('notes.shared', [
-            'share' => $share
-        ]);
-    }
-
-    // Страница поиска записок
-    public function search(Request $request)
-    {
-        $notes = [];
-
-        // Проверка наличия запроса для поиска
-        if($request->has('search')) {
-
-            // Сокрытие приватных записок от гостей
-            if(Auth::check()) {
-                // Аутентифицирован
-                $notes = Note::where('title', 'LIKE', '%' . $request->search . '%')
-                ->orWhere('text', 'LIKE', '%' . $request->search . '%')
-                ->with('_author')->orderBy('created_at', 'desc')->get();
+        // Show all notes
+        if (($filters['show'] ?? '') == 'public') {
+            if(!$request->isAuthenticated()) {
+                $notes = $notes->where('private', 0);
             } else {
-                // Гость
-                $notes = Note::where([['private', 0], ['title', 'LIKE', '%' . $request->search . '%']])
-                ->orWhere([['private', 0], ['text', 'LIKE', '%' . $request->search . '%']])
-                ->with('_author')->orderBy('created_at', 'desc')->get();
+                // Checking users email verification
+                if (!$request->authUserStrict()->hasVerifiedEmail()) {
+                    return redirect(route('verification.notice'));
+                }
             }
         }
 
-        return view('notes.search', [
-            'notes' => $notes
-        ]);
+        //
+        if (($filters['show'] ?? '') == '') {
+            if($request->isAuthenticated()) {
+                return redirect(route('notes.public'));
+            }
 
+            $notes = $notes->where('private', 2);
+        }
+
+        return view('notes.index', [
+            'filters' => $filters,
+            'notes' => $notes->orderBy('created_at', 'desc')->get(),
+        ]);
     }
 
-    // Страница записки
-    public function note($note)
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return void
+     */
+    public function create()
     {
-        // Получение записки с автором и файлами
-        $note = Note::where('id', $note)->with('_author', 'attachments')->first();
+        abort(404);
+    }
 
-        // Проверка на наличие записки
-        if(!$note) {
-            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Note is not found']);
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param StoreNoteRequest $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function store(StoreNoteRequest $request)
+    {
+        $this->authorize('store', Note::class);
+
+        $note = $request->authUser()->notes()->create([
+            'uid' => Str::uuid()->toString(),
+            'title' => $request->input('title', 'Untitled note'),
+            'text' => $request->input('text', ''),
+            'private' => $request->input('private', 0)
+        ]);
+
+        // Checking attached files
+        if ($request->hasfile('attachment')) {
+            $note->attachFile($request->file('attachment'));
         }
 
-        // Проверка на наличие доступа гостя к приватной записки
-        // Сделал именно так для того, чтобы все записки были на главной странице
-        if($note->private && !Auth::check()) {
-            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Need authentication']);
+        return redirect(route('notes.my'));
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param BaseFormRequest $request
+     * @param Note $note
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function show(BaseFormRequest $request, Note $note)
+    {
+        $isOwner = false;
+
+        // Checking note existence
+        if (!$note) {
+            return redirect(route('notes.public'))->with($this->messages['note.empty']);
         }
 
-        // Проверка на аутентификацию юзера
-        if(Auth::check()) {
+        // Checking private note accessibility for guest user
+        if ($note->private && !$request->isAuthenticated()) {
+            return redirect(route('notes.public'))->with($this->messages['note.available']);
+        }
 
-            // Проверка на соответствие юзера автору записки
-            // Сделал для флага isAuthor, чтобы скрыть кнопки (edit, share) и формы (edit) от других юзеров
-            if($note->author == Auth::user()->id) {
+        // Checking authenticated user
+        if ($request->isAuthenticated()) {
+            // Checking note ownership
+            // isOwner flag hides edit & share buttons, modAls and note sharing from other users
+            $isOwner = ($note->user_id == $request->authUserStrict()->id);
 
-                // Преобразование markdown
-                $note->text = Str::markdown($note->text);
-
-                return view('notes.note', [
-                    'note' => $note,
-                    'isAuthor' => true,
-                ]);
+            // Checking access to private shared note
+            $canRead = NoteShared::where([['note_id', $note->id], ['user_id', $request->authUserStrict()->id]])->get()->isNotEmpty();
+            if (!$isOwner && $note->private && !$canRead) {
+                return redirect(route('notes.public'))->with($this->messages['note.private']);
             }
-
-            // Проверка на наличие доступа к приватной записке
-            $canRead = NoteShared::where([['note_id', $note->id], ['user_id', Auth::user()->id]])->get()->isNotEmpty();
-            if($note->private && !$canRead) {
-                return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'This note is private']);
-            }
         }
 
-        // Преобразование markdown
+        // Getting users with access to note
+        $shared = ($isOwner) ? NoteShared::where('note_id', $note->id)->with('user')->get() : [];
+
+        // Markdown translate
         $note->text = Str::markdown($note->text);
 
         return view('notes.note', [
             'note' => $note,
-            'isAuthor' => false,
+            'shared' => $shared,
+            'isOwner' => $isOwner,
         ]);
     }
 
-    // Страница редактирования записки
-    public function edit($note)
+    /**
+     * Edit note
+     *
+     * @param BaseFormRequest $request
+     * @param $note
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function edit(BaseFormRequest $request, Note $note)
     {
-        $note = Note::where('id', $note)->with('_author')->first();
+        $shared = [];
 
-        // Проверка на наличие записки
-        if(!$note) {
-            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Note is not found']);
+        // Checking note existence
+        if (!$note) {
+            return redirect(route('notes.index'))->with($this->messages['note.empty']);
         }
 
-        // Проверка на наличие доступа гостя к приватной записки
-        if($note->private && !Auth::check()) {
-            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Need authentication']);
+        // Checking private note accessibility for guest user
+        if ($note->private && !$request->isAuthenticated()) {
+            return redirect(route('notes.index'))->with($this->messages['note.available']);
         }
 
-        // Проверка на аутентификацию юзера
-        if(Auth::check()) {
-
-            // Проверка на соответствие юзера автору записки
-            if($note->author != Auth::user()->id) {
-                return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Only the author can edit this note']);
+        // Checking authenticated user
+        if ($request->isAuthenticated()) {
+            // Checking note ownership
+            // isOwner flag hides edit & share buttons and modals from other users
+            if ($note->user_id != $request->authUserStrict()->id) {
+                return redirect(route('notes.index'))->with($this->messages['note.owned']);
             }
 
-            // Получение юзеров с доступом к записке
+            // Getting users with access to note
             $shared = NoteShared::where('note_id', $note->id)->with('user')->get();
-
-            return view('notes.edit', [
-                'note' => $note,
-                'shared' => $shared
-            ]);
-
         }
 
+        return view('notes.edit', [
+            'note' => $note,
+            'shared' => $shared
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param UpdateNoteRequest $request
+     * @param Note $note
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function update(UpdateNoteRequest $request, Note $note)
+    {
+        $this->authorize('update', $note);
+
+        $note->title = $request->input('title', 'Untitled note');
+        $note->text = $request->input('text', '');
+        $note->private = $request->input('private', 0);
+
+        $note->save();
+
+        // Checking attached files
+        if ($request->hasfile('attachment')) {
+            $note->attachFile($request->file('attachment'));
+        }
+
+        return redirect(route('notes.show', $note->uid))->with($this->messages['note.updated']);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param BaseFormRequest $request
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function destroy(BaseFormRequest $request, Note $note)
+    {
+        dd($note);
+
+//        $note = Note::find($request->input('id'));
+        $note = Note::find($id);
+
+        $this->authorize('delete', [$note]);
+
+        // Checking target note existence
+        if (!$note) {
+            return response()->json($this->messages['note.empty']);
+        }
+
+        // Checking sender is owner of the note
+        if ($note->user_id != $request->authUserStrict()->id) {
+            return response()->json($this->messages['note.owned']);
+        }
+
+        // Delete note attachments
+        if($note->attachments->isNotEmpty())
+
+            foreach ($note->attachments as $att) {
+                // Checking file successfully deleted
+                if(Storage::exists())
+                    if (Storage::delete('public/' . $att->path)) {
+                        $att->delete();
+                    }
+            }
+
+        $note->delete();
     }
 
 
-    // Поделиться записью с юзером
-    public function share(Request $request)
+
+    /**
+     * Search note
+     *
+     * @param BaseFormRequest $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View
+     */
+    public function search(BaseFormRequest $request)
     {
-        $sender = Auth::user();
+        $notes = [];
 
-        $user = User::where('email', $request->email)->get()->first();
-        $note = Note::find($request->note_id);
+        // Checking search query existence
+        if ($request->has('search')) {
+            $notes = Note::query()->with('user')->latest();
+            $search = $request->input('search');
+            $conditions[] = ['title', 'LIKE', '%' . $search . '%'];
+//            $conditions[] = ['private', 0];
+//            $conditions[] = ['user_id', $request->authUserStrict()->id];
 
-        // Проверка на наличие юзера
-        if(!$user) {
-            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'User not found']);
+            // Checking user auth
+            if (!$request->isAuthenticated()) {
+            }
+
+            // Getting notes
+            $notes = $notes->where($conditions);
+            $conditions[0][0] = 'text';
+            $notes = $notes->orWhere($conditions);
         }
 
-        // Проверка на наличие доступа юзера к записке
-        $alreadyShared = NoteShared::where([['note_id', $request->note_id], ['user_id', $user->id]])->get()->isNotEmpty();
+        return view('notes.search', [
+            'notes' => $notes->with('user')->orderBy('created_at', 'desc')->get()
+        ]);
 
-        if($alreadyShared) {
-            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'This note already shared with <starong>' . $user->name . '</starong>']);
+    }
+
+    /**
+     * Share note with user by email
+     *
+     * @param BaseFormRequest $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function share(BaseFormRequest $request)
+    {
+        $note = Note::find($request->input('note_id'));
+
+        $this->authorize('share', $note);
+
+        // Getting sender and target user
+        $sender = $request->authUserStrict();
+        $user = User::where('email', $request->input('email'))->first();
+
+        // Checking target user existence
+        if (!$user) {
+            return redirect(route('notes.show', $note->uid))->with($this->messages['user.empty']);
         }
 
-        // Проверка на sharing самому себе
-        if($sender->id == $user->id) {
-            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Can\'t share with yourself']);
+        // Checking user access existence
+        $alreadyShared = NoteShared::where([
+            ['note_id', $request->input('note_id')],
+            ['user_id', $user->id],
+        ])->get()->isNotEmpty();
+
+        if ($alreadyShared) {
+            return redirect(route('notes.show', $note->uid))->with($this->messages['note.share.exists']);
         }
 
-        // Проверка на sharing чужой записки
-        if($sender->id != $note->author) {
-            return redirect()->route('notes')->with(['notification' => true, 'type' => 'warning', 'msg' => 'Only the author can share the note']);
+        // Checking sender is not a target user
+        if ($sender->id == $user->id) {
+            return redirect(route('notes.show', $note->uid))->with($this->messages['note.share.self']);
         }
 
-        // Создание sharing
+        // Checking sender is owner of the note
+        if ($sender->id != $note->user_id) {
+            return redirect(route('notes.show', $note->uid))->with($this->messages['note.owned']);
+        }
+
+        // Creating of sharing
         NoteShared::create([
             'note_id' => $request->note_id,
             'user_id' => $user->id
         ]);
 
-        // Отправка оповещения юзеру
-        $notificationData = [
+        // Notification user via email
+        Notification::send($user, new NoteShareNotification([
             'name' => 'Note sharing notification',
             'action' => 'Check',
             'url' => url('/note') . '/' . $note->id,
             'msg' => '<strong>' . $sender->name . '</strong> has been shared note <strong>' . $note->title . '</strong> with you.',
-        ];
+        ]));
 
-        Notification::send($user, new NoteShareNotification($notificationData));
-
-        return redirect()->route('notes.my')->with(['notification' => true, 'type' => 'success', 'msg' => 'Note is shared with ' . $user->name]);
-
+        return redirect(route('notes.show', $note->uid))->with($this->messages['note.share.done']);
     }
 
-    // Прекращение доступа к записке
-    public function unshare(Request $request)
+    /**
+     * Terminate note sharing
+     *
+     * @param BaseFormRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function unshare(BaseFormRequest $request)
     {
-        //Удаление sharing
-        $notesharing = NoteShared::where([['note_id', $request->note_id], ['user_id', $request->user_id]])->with('note', 'note._author', 'user')->first();
+        // Remove sharing note
+        $notesharing = NoteShared::where([
+            ['note_id', $request->input('note_id')],
+            ['user_id', $request->input('user_id')]
+        ])->with('note', 'user')->first();
         $notesharing->delete();
 
-        // Отправка оповещения юзеру
-        $notificationData = [
+        // Notification user via email
+        Notification::send($notesharing->user, new NoteShareNotification([
             'name' => 'Note sharing notification',
-            'msg' => '<strong>' . $notesharing->note->_author->name . '</strong> has stopped sharing the note <strong>' . $notesharing->note->title . '</strong> with you.',
-        ];
-
-        Notification::send($notesharing->user, new NoteShareNotification($notificationData));
+            'msg' => '<strong>' . $request->authUserStrict()->name . '</strong> has stopped sharing the note <strong>' . $notesharing->note->title . '</strong> with you.',
+        ]));
 
         return response()->json(['success' => true]);
-
     }
 
-    // Создание записки
-    public function create(Request $request)
+    /**
+     * Remove note attachment with file
+     *
+     * @param BaseFormRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteNoteAttachment(BaseFormRequest $request)
     {
-        // Генерация UUIDv4 для записки
-        $note_id = Str::uuid()->toString();
-
-        // Создание записки
-        $note = Note::create([
-            'id' => $note_id,
-            'author' => Auth::user()->id,
-            'title' => $request->title,
-            'text' => $request->text,
-            'private' => isset($request->private)
-        ]);
-
-        // Проверка на наличие attachment
-        if($request->hasfile('attachment')) {
-
-            // Сохранение каждого файла в папку и в БД
-            foreach ($request->file('attachment') as $file) {
-                // Сборка названия файла
-                // <UNIX time>_<UUIDv4>_<Имя файла>
-                $name = time() . '_' . $note_id . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('note_attachments', $name, 'public');
-
-                // Создание записи в БД
-                NoteAttachment::create([
-                    'note_id' => $note_id,
-                    '_name' => $file->getClientOriginalName(),
-                    'name' => $name,
-                    'path' => $path
-                ]);
-
-            }
-
-        }
-
-        return redirect()->route('notes.my');
-
-    }
-
-    //Обновление записки
-    public function update(Request $request)
-    {
-        // Обновление записки
-        $note = Note::find($request->id);
-
-        $note->title = $request->title;
-        $note->text = $request->text;
-        $note->private = isset($request->private);
-
-        $note->save();
-
-        // Проверка на наличие attachment
-        if($request->hasfile('attachment')) {
-
-            // Сохранение каждого файла в папку и в БД
-            foreach ($request->file('attachment') as $file) {
-                // Сборка названия файла
-                // <UNIX time>_<UUIDv4>_<Имя файла>
-                $name = time() . '_' . $request->id . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('note_attachments', $name, 'public');
-
-                // Создание записи в БД
-                NoteAttachment::create([
-                    'note_id' => $request->id,
-                    '_name' => $file->getClientOriginalName(),
-                    'name' => $name,
-                    'path' => $path
-                ]);
-
-            }
-
-        }
-
-
-        return redirect(route('notes') . '/note/' . $note->id)->with(['notification' => true, 'type' => 'success', 'msg' => 'Note has been updated']);
-
-    }
-
-    // Удаление прикрепленного файла записки
-    public function deleteNoteAttachment(Request $request)
-    {
-        // Получение прикрепления файла
+        // Get note attachment
         $attachment = NoteAttachment::find($request->file_id);
 
-        // Проверка успешного удаления файла
-        if(Storage::delete('public/' . $attachment->path)) {
-
-            // Удаление записи из БД
+        // Checking file successfully deleted
+        if (Storage::delete('public/' . $attachment->path)) {
             $attachment->delete();
 
-            // Вывод сообщения
             return response()->json(['success' => true]);
-
         }
 
-        // Вывод сообщения
         return response()->json(['success' => false]);
-
     }
+
 }
