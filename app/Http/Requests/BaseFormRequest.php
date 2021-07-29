@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\User;
 
 /**
  * Class BaseFormRequest
@@ -62,6 +62,8 @@ class BaseFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [];
+        return [
+
+        ];
     }
 }

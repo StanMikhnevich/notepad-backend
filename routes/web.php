@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', 'NoteController@index')->name('notes');
 
 Route::get('notes/?show=public', 'NoteController@index')->name('notes.public');
-Route::get('notes/search', 'NoteController@search')->name('notes.search');
 
 Route::resource('notes', 'NoteController');
 Route::middleware(['auth', 'verified'])->group(function () {

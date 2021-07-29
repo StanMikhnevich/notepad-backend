@@ -16,7 +16,7 @@ class NotePolicy
      * @param  \App\Models\User  $user
      * @return bool
      */
-    public function viewAny(User $user)
+    public function viewAny(User $user): bool
     {
 //        return (bool) $user;
         return true;
@@ -25,12 +25,17 @@ class NotePolicy
     /**
      * Determine whether the user can view the model.
      *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\Note  $note
+     * @param User|null $user
+     * @param \App\Models\Note $note
      * @return bool
      */
-    public function view(User $user, Note $note): bool
+    public function view(?User $user, Note $note): bool
     {
+//        if ($note->private) {
+//
+//        }
+
+//        return (bool) !empty($user);
         return true;
     }
 

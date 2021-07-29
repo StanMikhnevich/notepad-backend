@@ -27,7 +27,7 @@
                     @endauth
                 </div>
 
-                <form action="{{ route('notes.search') }}" method="GET">
+                <form action="{{ route('notes.index') }}" method="GET">
                     <div class="input-group input-group-sm my-3 mx-4">
                         <input type="text" name="search" class="form-control" value="{{ request()->get('search') ?? '' }}" placeholder="Search..." aria-describedby="AppNavSearch" required>
                         <button class="btn btn-outline-dark" type="submit" id="AppNavSearch"><i class="bi bi-search"></i></button>

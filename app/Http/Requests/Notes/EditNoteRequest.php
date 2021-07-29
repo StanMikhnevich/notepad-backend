@@ -3,8 +3,10 @@
 namespace App\Http\Requests\Notes;
 
 use App\Http\Requests\BaseFormRequest;
+use Illuminate\Validation\Rule;
+use App\Models\Note;
 
-class StoreNoteRequest extends BaseFormRequest
+class EditNoteRequest extends BaseFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -13,7 +15,7 @@ class StoreNoteRequest extends BaseFormRequest
      */
     public function authorize(): bool
     {
-        return $this->isAuthenticated();
+        return true;
     }
 
     /**
@@ -24,11 +26,7 @@ class StoreNoteRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|min:5|max:100',
-            'text' => 'required|string|min:5|max:2000',
-            'private' => 'boolean',
-            'attachment' => 'nullable|array',
-            'attachment.*' => 'file|mimetypes:text/*,image/*,audio/*,video/*|max:2048',
+            //
         ];
     }
 }

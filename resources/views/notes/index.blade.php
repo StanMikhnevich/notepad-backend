@@ -13,6 +13,10 @@
                 @break
             @endswitch
 
+            @isset($filters['search'])
+                {{ __('Search') . ' : ' . $filters['search']}}
+            @endisset
+
             @auth
             <a class="btn btn-sm shadow-sm bg-white float-end" href="#" data-bs-toggle="modal" data-bs-target="#NoteCreateModal"><i class="bi bi-plus"></i></a>
             @endauth

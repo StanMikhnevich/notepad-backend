@@ -70,7 +70,7 @@
                     </div>
                 </div>
 
-                @if($shared->count() > 0)
+                @if($note->shared->count() > 0)
                 <div class="bg-white mb-3 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
 
@@ -79,7 +79,7 @@
                         </div>
 
                         <div class="mb-3">
-                            @foreach ($shared as $sharing)
+                            @foreach ($note->shared as $sharing)
                                 <span id="NoteSharingItem{{ $sharing->id }}" class="badge bg-light shadow-sm text-secondary p-3">
                                     {{ $sharing->user->name }} <i class="bi bi-x-circle cursor-pointer text-danger ms-3" onclick="unshareNote({{ $sharing->id }}, '{{ $note->id }}', {{ $sharing->user_id }})"></i>
                                 </span>

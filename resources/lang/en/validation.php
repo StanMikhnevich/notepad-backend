@@ -135,8 +135,25 @@ return [
     */
 
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'user' => [
+            'empty' => 'User is not found',
+        ],
+        'note' => [
+            'created' => 'Note has benn created',
+            'updated' => 'Note has been updated',
+            'deleted' => 'Note has been deleted',
+            'shared' => 'Note has been shared with user',
+            'unshared' => 'Sharing has been terminated',
+            'is_private' => 'This note is private',
+            'not_Author' => 'Only the author can edit this note',
+            'is_empty' => 'Note is not found',
+            'share' => [
+                'all' => 'User not found | target user is you | this note is already shared',
+                'self' => 'You can\'t share this note with yourself',
+                'user_empty' => 'User not found',
+                'exists' => 'This note is already shared with this user',
+                'done' => '',
+            ],
         ],
     ],
 

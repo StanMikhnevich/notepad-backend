@@ -13,6 +13,8 @@ use App\Http\Requests\BaseFormRequest;
 
 use App\Http\Requests\Notes\StoreNoteRequest;
 use App\Http\Requests\Notes\UpdateNoteRequest;
+use App\Http\Requests\Notes\EditNoteRequest;
+use App\Http\Requests\Notes\ShareNoteRequest;
 
 use App\Notifications\NoteShareNotification;
 
@@ -23,61 +25,6 @@ use App\Models\NoteAttachment;
 
 class NoteController extends Controller
 {
-
-    protected $messages = [
-        'user.empty' => [
-            'notification' => true,
-            'type' => 'warning',
-            'msg' => 'User is not found',
-        ],
-        'note.empty' => [
-            'notification' => true,
-            'type' => 'warning',
-            'msg' => 'Note is not found',
-        ],
-        'note.available' => [
-            'notification' => true,
-            'type' => 'warning',
-            'msg' => 'Need authentication',
-        ],
-        'note.private' => [
-            'notification' => true,
-            'type' => 'warning',
-            'msg' => 'This note is private',
-        ],
-        'note.owned' => [
-            'notification' => true,
-            'type' => 'warning',
-            'msg' => 'Only the author can edit this note',
-        ],
-        'note.updated' => [
-            'notification' => true,
-            'type' => 'success',
-            'msg' => 'Note has been updated',
-        ],
-        'note.deleted' => [
-            'success' => true,
-            'notification' => true,
-            'type' => 'success',
-            'msg' => 'Note has been deleted',
-        ],
-        'note.share.exists' => [
-            'notification' => true,
-            'type' => 'warning',
-            'msg' => 'This note is already shared with this user',
-        ],
-        'note.share.self' => [
-            'notification' => true,
-            'type' => 'warning',
-            'msg' => 'Can\'t share with yourself',
-        ],
-        'note.share.done' => [
-            'notification' => true,
-            'type' => 'success',
-            'msg' => 'Note was shared with user',
-        ],
-    ];
-
     /**
      * Show all|my|shared notes
      *
@@ -85,56 +32,44 @@ class NoteController extends Controller
      */
     public function index(BaseFormRequest $request)
     {
-        $notes = Note::query()->with('user')->latest();
-        $filters = $request->only('show');
+        $query = Note::with('user')->latest();
+        $filters = $request->only(['show', 'search']);
 
-        // Show shared notes
         if (($filters['show'] ?? '') == 'shared') {
-            $notes = $notes->whereHas('shared', function (Builder $builder) use ($request) {
+            $query->whereHas('shared', function (Builder $builder) use ($request) {
                 $builder->where('user_id', $request->authUserStrict()->id);
             });
         }
 
-        // Show my notes
         if (($filters['show'] ?? '') == 'my') {
-            $notes = $request->authUserStrict()->notes();
+            $query = $request->authUserStrict()->notes();
         }
 
-        // Show all notes
         if (($filters['show'] ?? '') == 'public') {
-            if(!$request->isAuthenticated()) {
-                $notes = $notes->where('private', 0);
-            } else {
-                // Checking users email verification
-                if (!$request->authUserStrict()->hasVerifiedEmail()) {
-                    return redirect(route('verification.notice'));
-                }
+            if (!$request->isAuthenticated()) {
+                $query->where('private', 0);
+            } elseif (!$request->authUserStrict()->hasVerifiedEmail()) {
+                return redirect(route('verification.notice'));
             }
         }
 
-        //
-        if (($filters['show'] ?? '') == '') {
-            if($request->isAuthenticated()) {
+        if (($filters['show'] ?? '') == '' && !($filters['search'] ?? '')) {
+            if ($request->isAuthenticated()) {
                 return redirect(route('notes.public'));
             }
 
-            $notes = $notes->where('private', 2);
+            $query = $query->where('private', 2);
+        }
+
+        if ($filters['search'] ?? '') {
+            $query->where('title', 'LIKE', '%' . $filters['search'] . '%');
+            $query->orWhere('text', 'LIKE', '%' . $filters['search'] . '%');
         }
 
         return view('notes.index', [
             'filters' => $filters,
-            'notes' => $notes->orderBy('created_at', 'desc')->get(),
+            'notes' => $query->orderBy('created_at', 'desc')->get(),
         ]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return void
-     */
-    public function create()
-    {
-        abort(404);
     }
 
     /**
@@ -148,6 +83,7 @@ class NoteController extends Controller
     {
         $this->authorize('store', Note::class);
 
+        /** @var Note $note */
         $note = $request->authUser()->notes()->create([
             'uid' => Str::uuid()->toString(),
             'title' => $request->input('title', 'Untitled note'),
@@ -155,7 +91,6 @@ class NoteController extends Controller
             'private' => $request->input('private', 0)
         ]);
 
-        // Checking attached files
         if ($request->hasfile('attachment')) {
             $note->attachFile($request->file('attachment'));
         }
@@ -165,42 +100,36 @@ class NoteController extends Controller
 
     /**
      * Display the specified resource.
-     *
+     *A
      * @param BaseFormRequest $request
      * @param Note $note
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function show(BaseFormRequest $request, Note $note)
     {
+        $this->authorize('view', [$note]);
         $isOwner = false;
 
-        // Checking note existence
-        if (!$note) {
-            return redirect(route('notes.public'))->with($this->messages['note.empty']);
-        }
-
-        // Checking private note accessibility for guest user
-        if ($note->private && !$request->isAuthenticated()) {
-            return redirect(route('notes.public'))->with($this->messages['note.available']);
-        }
-
-        // Checking authenticated user
         if ($request->isAuthenticated()) {
-            // Checking note ownership
-            // isOwner flag hides edit & share buttons, modAls and note sharing from other users
+            //TODO изменить
             $isOwner = ($note->user_id == $request->authUserStrict()->id);
 
             // Checking access to private shared note
-            $canRead = NoteShared::where([['note_id', $note->id], ['user_id', $request->authUserStrict()->id]])->get()->isNotEmpty();
+            $canRead = NoteShared::where([
+                ['note_id', $note->id],
+                ['user_id', $request->authUserStrict()->id]
+            ])->doesntExist();
+
             if (!$isOwner && $note->private && !$canRead) {
-                return redirect(route('notes.public'))->with($this->messages['note.private']);
+                return redirect(route('notes.public'))
+                    ->with('warning', trans('validation.custom.note.is_private'));
             }
         }
 
         // Getting users with access to note
         $shared = ($isOwner) ? NoteShared::where('note_id', $note->id)->with('user')->get() : [];
 
-        // Markdown translate
         $note->text = Str::markdown($note->text);
 
         return view('notes.note', [
@@ -211,39 +140,17 @@ class NoteController extends Controller
     }
 
     /**
-     * Edit note
-     *
-     * @param BaseFormRequest $request
+     * @param EditNoteRequest $request
      * @param Note $note
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function edit(BaseFormRequest $request, Note $note)
+    public function edit(EditNoteRequest $request, Note $note)
     {
         $this->authorize('edit', $note);
 
-        $shared = [];
-
-        // Checking note existence
-        if (!$note) {
-            return redirect(route('notes.index'))->with($this->messages['note.empty']);
-        }
-
-        // Checking private note accessibility for guest user
-        if ($note->private && !$request->isAuthenticated()) {
-            return redirect(route('notes.index'))->with($this->messages['note.available']);
-        }
-
-        // Checking authenticated user
-        if ($request->isAuthenticated()) {
-
-            // Getting users with access to note
-            $shared = NoteShared::where('note_id', $note->id)->with('user')->get();
-        }
-
         return view('notes.edit', [
-            'note' => $note,
-            'shared' => $shared
+            'note' => $note->load('shared.user'),
         ]);
     }
 
@@ -258,19 +165,14 @@ class NoteController extends Controller
     public function update(UpdateNoteRequest $request, Note $note)
     {
         $this->authorize('update', $note);
+        $note->update($request->only(['title', 'text', 'private']));
 
-        $note->title = $request->input('title', 'Untitled note');
-        $note->text = $request->input('text', '');
-        $note->private = $request->input('private', 0);
-
-        $note->save();
-
-        // Checking attached files
         if ($request->hasfile('attachment')) {
             $note->attachFile($request->file('attachment'));
         }
 
-        return redirect(route('notes.show', $note->uid))->with($this->messages['note.updated']);
+        return redirect(route('notes.show', $note->uid))
+            ->with('success', trans('validation.custom.note.updated'));
     }
 
     /**
@@ -282,39 +184,17 @@ class NoteController extends Controller
      */
     public function destroy(BaseFormRequest $request): JsonResponse
     {
+        //TODO 123asrasfr
         $note = Note::find($request->input('id'));
+        $this->authorize('delete', $note);
 
-        // Checking target note existence
-        if (!$note) {
-            return response()->json($this->messages['note.empty']);
-        }
+        $note->deleteAll();
 
-        $this->authorize('delete', [$note]);
-
-        // Delete note attachments
-        if ($note->hasAttachments()) {
-            foreach ($note->attachments as $att) {
-                if(Storage::disk('public')->exists($att->path)) {
-                    if (Storage::disk('public')->delete($att->path)) {
-                        $att->delete();
-                    }
-                }
-            }
-        }
-
-        // Delete note sharing
-        if ($note->isShared()) {
-            foreach ($note->shared as $sharing) {
-                $sharing->delete();
-            }
-        }
-
-        $note->delete();
-
-        return response()->json($this->messages['note.deleted']);
+        return response()->json([
+            'success' => true,
+            'msg' => trans('validation.custom.note.deleted'),
+        ]);
     }
-
-
 
     /**
      * Search note
@@ -324,28 +204,16 @@ class NoteController extends Controller
      */
     public function search(BaseFormRequest $request)
     {
-        $notes = [];
+        $query = Note::with('user')->latest();
+        $search = $request->input('search');
 
-        // Checking search query existence
-        if ($request->has('search')) {
-            $notes = Note::query()->with('user')->latest();
-            $search = $request->input('search');
-            $conditions[] = ['title', 'LIKE', '%' . $search . '%'];
-//            $conditions[] = ['private', 0];
-//            $conditions[] = ['user_id', $request->authUserStrict()->id];
-
-            // Checking user auth
-//            if (!$request->isAuthenticated()) {
-//            }
-
-            // Getting notes
-            $notes = $notes->where($conditions);
-            $conditions[0][0] = 'text';
-            $notes = $notes->orWhere($conditions);
+        if ($search) {
+            $query->where('title', 'LIKE', '%' . $search . '%');
+            $query->orWhere('text', 'LIKE', '%' . $search . '%');
         }
 
         return view('notes.search', [
-            'notes' => $notes->with('user')->orderBy('created_at', 'desc')->get()
+            'notes' => $query->with('user')->orderBy('created_at', 'desc')->get()
         ]);
 
     }
@@ -353,55 +221,32 @@ class NoteController extends Controller
     /**
      * Share note with user by email
      *
-     * @param BaseFormRequest $request
+     * @param ShareNoteRequest $request
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function share(BaseFormRequest $request)
+    public function share(ShareNoteRequest $request)
     {
         $note = Note::find($request->input('note_id'));
 
         $this->authorize('share', $note);
 
-        // Getting sender and target user
         $sender = $request->authUserStrict();
         $user = User::where('email', $request->input('email'))->first();
 
-        // Checking target user existence
-        if (!$user) {
-            return redirect(route('notes.show', $note->uid))->with($this->messages['user.empty']);
-        }
+        $user->shared_notes()->attach($note);
 
-        // Checking user access existence
-        $alreadyShared = NoteShared::where([
-            ['note_id', $request->input('note_id')],
-            ['user_id', $user->id],
-        ])->get()->isNotEmpty();
-
-        if ($alreadyShared) {
-            return redirect(route('notes.show', $note->uid))->with($this->messages['note.share.exists']);
-        }
-
-        // Checking sender is not a target user
-        if ($sender->id == $user->id) {
-            return redirect(route('notes.show', $note->uid))->with($this->messages['note.share.self']);
-        }
-
-        // Creating of sharing
-        NoteShared::create([
-            'note_id' => $request->note_id,
-            'user_id' => $user->id
-        ]);
-
-        // Notification user via email
         Notification::send($user, new NoteShareNotification([
             'name' => 'Note sharing notification',
             'action' => 'Check',
             'url' => url('/note') . '/' . $note->id,
-            'msg' => '<strong>' . $sender->name . '</strong> has been shared note <strong>' . $note->title . '</strong> with you.',
+            'username' => $sender->name,
+            'title' => $note->title,
+            'msg' => '<strong>' . e($sender->name) . '</strong> has been shared note <strong>' . e($note->title) . '</strong> with you.',
         ]));
 
-        return redirect(route('notes.show', $note->uid))->with($this->messages['note.share.done']);
+        return redirect(route('notes.show', $note->uid))
+            ->with('success', trans('validation.custom.note.shared'));
     }
 
     /**
@@ -413,21 +258,16 @@ class NoteController extends Controller
      */
     public function unshare(BaseFormRequest $request): JsonResponse
     {
+        $note = Note::find($request->input('note_id'));
 
-        // Remove sharing note
-        $sharing = NoteShared::where([
-            ['note_id', $request->input('note_id')],
-            ['user_id', $request->input('user_id')]
-        ])->with('note', 'user')->first();
+        $this->authorize('unshare', $note);
 
-        $this->authorize('unshare', $sharing->note);
-
+        $sharing = $note->shared()->with('user')->where('user_id', $request->input('user_id'))->first();
         $sharing->delete();
 
-        // Notification user via email
         Notification::send($sharing->user, new NoteShareNotification([
             'name' => 'Note sharing notification',
-            'msg' => '<strong>' . $request->authUserStrict()->name . '</strong> has stopped sharing the note <strong>' . $sharing->note->title . '</strong> with you.',
+            'msg' => '<strong>' . $request->authUserStrict()->name . '</strong> has stopped sharing the note <strong>' . $note->title . '</strong> with you.',
         ]));
 
         return response()->json(['success' => true]);
@@ -442,12 +282,10 @@ class NoteController extends Controller
      */
     public function deleteNoteAttachment(BaseFormRequest $request): JsonResponse
     {
-        // Get note attachment
-        $attachment = NoteAttachment::find($request->file_id);
+       $attachment = NoteAttachment::find($request->file_id);
 
         $this->authorize('delete_attachment', $attachment->note);
 
-        // Checking file successfully deleted
         if (Storage::disk('public')->delete($attachment->path)) {
             $attachment->delete();
 
@@ -456,5 +294,4 @@ class NoteController extends Controller
 
         return response()->json(['success' => false]);
     }
-
 }

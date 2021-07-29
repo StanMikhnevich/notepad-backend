@@ -5,8 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 
@@ -25,13 +26,13 @@ use Illuminate\Support\Str;
  * @property-read int|null $attachments_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\NoteShared[] $shared
  * @property-read int|null $shared_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $shared_users
+ * @property-read int|null $shared_users_count
  * @property-read \App\Models\User $user
  * @method static \Illuminate\Database\Eloquent\Builder|Note newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Note newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Note query()
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Note find($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Note where(...$value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note wherePrivate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereText($value)
@@ -39,6 +40,7 @@ use Illuminate\Support\Str;
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereUid($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereUserId($value)
+ * @mixin \Eloquent
  */
 class Note extends Model
 {
@@ -52,12 +54,12 @@ class Note extends Model
         'text',
     ];
 
-    protected $with = ['user', 'attachments'];
+    protected $with = ['user', 'attachments', 'shared.user'];
 
     /**
      * @return string
      */
-    public function getRouteKeyName()
+    public function getRouteKeyName(): string
     {
         return 'uid';
     }
@@ -80,6 +82,14 @@ class Note extends Model
     public function shared(): HasMany
     {
         return $this->hasMany(NoteShared::class);
+    }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function shared_users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, NoteShared::class);
     }
 
     /**
@@ -112,22 +122,21 @@ class Note extends Model
         return (bool) $this->shared->isNotEmpty();
     }
 
-
+    /**
+     * Attach & store files
+     *
+     * @param array|null $files
+     */
     public function attachFile(?array $files)
     {
-        // Store file(s)
         foreach ($files as $file) {
-
             $ext = $file->getClientOriginalExtension();
-
-            // Original file name
             $original_name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $ext;
 
             // <UUIDv4>_<count>.<extension>
             $name = Str::uuid()->toString() . '.' . $ext;
             $path = $file->storeAs('note-attachments', $name, 'public');
 
-            // Создание записи в БД
             NoteAttachment::create([
                 'note_id' => $this->id,
                 'original' => $original_name,
@@ -135,7 +144,52 @@ class Note extends Model
                 'path' => $path
             ]);
         }
+    }
 
+    /**
+     * Detach & delete files
+     *
+     * @return $this
+     */
+    public function detachFiles(): Note
+    {
+        if ($this->hasAttachments()) {
+            foreach ($this->attachments as $att) {
+                if(Storage::disk('public')->exists($att->path)) {
+                    if (Storage::disk('public')->delete($att->path)) {
+                        $att->delete();
+                    }
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Terminate all shares
+     *
+     * @return $this
+     */
+    public function unshareAll(): Note
+    {
+        if ($this->isShared()) {
+            foreach ($this->shared as $sharing) {
+                $sharing->delete();
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Delete note with files and sharing
+     *
+     * @return bool|null
+     */
+    public function deleteAll(): ?bool
+    {
+        return $this->detachFiles()->unshareAll()->delete();
     }
 
 }

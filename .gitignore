@@ -15,3 +15,5 @@ storage/*.key
 Homestead.yaml
 Homestead.json
 /.vagrant
+/.phpstorm.meta.php
+/_ide_helper.php
