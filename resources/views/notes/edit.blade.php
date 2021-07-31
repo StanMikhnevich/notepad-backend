@@ -4,7 +4,7 @@
             <span class="text-uppercase">{{ $note->title }} ⟶ Edit</span>
 
             @if($note->private)
-                <i class="bi bi-lock-fill text-purple-500 ms-3"></i>
+                <i class="bi bi-lock-fill text-gray-500 ms-3"></i>
             @endif
 
             <span class="float-end text-right font-half">
@@ -47,11 +47,11 @@
                         </div>
 
                         <div class="mb-3 text-right px-0">
-                            <a class="btn btn-lg btn-link" href="{{ route('notes.my') }}">Cancel</a>
+                            <a class="btn btn-lg btn-link" href="{{ route('notes.show', $note->uid) }}">Cancel</a>
                             <button type="submit" class="btn btn-lg btn-primary">Save</button>
                         </div>
 
-                        @if(isset($note->attachments[0]))
+                        @if($note->hasAttachments())
                         <hr class="my-5">
 
                         <div class="mb-3">
@@ -62,7 +62,7 @@
                         <span id="NoteAttachmentItem{{ $file->id }}" class="badge bg-light shadow-sm text-secondary cursor-pointer p-3 me-1 mb-1">
                             <i class="bi bi-paperclip me-3"></i>
                             {{ $file->original }}
-                            <i class="bi bi-x-circle cursor-pointer text-danger ms-3" onclick="deleteNoteAttachment({{ $file->id }}, '{{ $file->_name }}')"></i>
+                            <i class="bi bi-x-circle cursor-pointer text-danger ms-3" onclick="deleteNoteAttachment('{{ $note->uid }}', {{ $file->id }}, '{{ $file->_name }}')"></i>
                         </span>
                         @endforeach
                         @endif
@@ -70,7 +70,7 @@
                     </div>
                 </div>
 
-                @if($note->shared->count() > 0)
+                @if($note->isShared())
                 <div class="bg-white mb-3 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
 
@@ -80,8 +80,8 @@
 
                         <div class="mb-3">
                             @foreach ($note->shared as $sharing)
-                                <span id="NoteSharingItem{{ $sharing->id }}" class="badge bg-light shadow-sm text-secondary p-3">
-                                    {{ $sharing->user->name }} <i class="bi bi-x-circle cursor-pointer text-danger ms-3" onclick="unshareNote({{ $sharing->id }}, '{{ $note->id }}', {{ $sharing->user_id }})"></i>
+                                <span id="NoteSharingItem{{ $sharing->id }}" class="badge bg-light shadow-sm text-secondary p-3 me-1 mb-1" >
+                                    {{ $sharing->user->name }} <i class="bi bi-x-circle cursor-pointer text-danger ms-3" onclick="unshareNote('{{ $note->uid }}', {{ $sharing->id }}, {{ $sharing->user_id }}, '{{ $sharing->user->name }}')"></i>
                                 </span>
                             @endforeach
                         </div>

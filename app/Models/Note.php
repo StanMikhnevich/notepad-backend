@@ -65,6 +65,14 @@ class Note extends Model
     }
 
     /**
+     * @return string
+     */
+    public function getTextMarkdownedAttribute(): string
+    {
+        return Str::markdown($this->text);
+    }
+
+    /**
      * Get note author
      *
      * @return BelongsTo
@@ -109,7 +117,7 @@ class Note extends Model
      */
     public function hasAttachments(): bool
     {
-        return (bool) $this->attachments->isNotEmpty();
+        return (bool)$this->attachments->isNotEmpty();
     }
 
     /**
@@ -119,7 +127,7 @@ class Note extends Model
      */
     public function isShared(): bool
     {
-        return (bool) $this->shared->isNotEmpty();
+        return (bool)$this->shared->isNotEmpty();
     }
 
     /**
@@ -155,7 +163,7 @@ class Note extends Model
     {
         if ($this->hasAttachments()) {
             foreach ($this->attachments as $att) {
-                if(Storage::disk('public')->exists($att->path)) {
+                if (Storage::disk('public')->exists($att->path)) {
                     if (Storage::disk('public')->delete($att->path)) {
                         $att->delete();
                     }

@@ -52,7 +52,7 @@
                             @if(($filters['show'] ?? '') == 'my')
                             <span class="float-end item-actions text-dark tr-1 ms-4">
                                 <a href="{{ route('notes.edit', $note->uid) }}" class="text-dark"><i class="bi bi-pencil-square"></i></a>
-                                <i class="bi bi-x-lg text-danger ms-3 cursor-pointer" onclick="deleteNote({{ $note->id }}, '{{ $note->title }}')"></i>
+                                <i class="bi bi-x-lg text-danger ms-3 cursor-pointer" onclick="deleteNote('{{ $note->uid }}', {{ $note->id }}, '{{ $note->title }}')"></i>
                             </span>
                             @endif
 

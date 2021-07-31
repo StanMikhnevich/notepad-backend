@@ -3868,37 +3868,38 @@ $(document).ready(function () {
       }
     });
   });
-}); // Прекращение доступа юзеру к записки
-// Глобальная функция. Чтобы использовать сразу из шаблона
+});
+/**
+ * @param note_uid
+ * @param sharing_id
+ * @param user_id
+ * @param user_name
+ * @returns {Promise<void>}
+ */
 
 window.unshareNote = /*#__PURE__*/function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(sharing_id, note_id, user_id) {
+  var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(note_uid, sharing_id, user_id, user_name) {
     return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            if (confirm('Stop sharing the note with this user ?')) {
-              $.ajax({
-                url: '/api/unshareNote',
-                type: 'POST',
-                data: {
-                  note_id: note_id,
-                  user_id: user_id
-                },
-                async: true,
-                headers: {
-                  "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')
-                },
-                dataType: 'JSON',
-                success: function success(res) {
-                  if (res.success) {
-                    $('#NoteSharingItem' + sharing_id).remove();
-                  }
-                }
-              });
+            if (!confirm('Stop sharing this note with ' + user_name + ' ?')) {
+              _context.next = 3;
+              break;
             }
 
-          case 1:
+            _context.next = 3;
+            return axios.post('/notes/' + note_uid + '/unshareNote', {
+              sharing_id: sharing_id
+            }).then(function (res) {
+              if (res.data.success) {
+                $('#NoteSharingItem' + sharing_id).remove();
+              }
+            })["catch"](function (error) {
+              console.log(error);
+            });
+
+          case 3:
           case "end":
             return _context.stop();
         }
@@ -3906,47 +3907,41 @@ window.unshareNote = /*#__PURE__*/function () {
     }, _callee);
   }));
 
-  return function (_x, _x2, _x3) {
+  return function (_x, _x2, _x3, _x4) {
     return _ref.apply(this, arguments);
   };
-}(); // Удаление прикрелённого к записки файла
-// Глобальная функция. Чтобы использовать сразу из шаблона
-
+}();
 /**
- *
- * @param file_id
+ * @param note_uid
+ * @param attachment
  * @param file_name
  * @returns {Promise<void>}
  */
 
 
 window.deleteNoteAttachment = /*#__PURE__*/function () {
-  var _ref2 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2(file_id, file_name) {
+  var _ref2 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2(note_uid, attachment, file_name) {
     return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
-            if (confirm('Delete ' + file_name + ' from note attachments ?')) {
-              $.ajax({
-                url: '/api/deleteNoteAttachment',
-                type: 'POST',
-                data: {
-                  file_id: file_id
-                },
-                async: true,
-                headers: {
-                  "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')
-                },
-                dataType: 'JSON',
-                success: function success(res) {
-                  if (res.success) {
-                    $('#NoteAttachmentItem' + file_id).remove();
-                  }
-                }
-              });
+            if (!confirm('Delete ' + file_name + ' from note attachments ?')) {
+              _context2.next = 3;
+              break;
             }
 
-          case 1:
+            _context2.next = 3;
+            return axios.post('/notes/' + note_uid + '/deleteNoteAttachment', {
+              attachment: attachment
+            }).then(function (res) {
+              if (res.data.success) {
+                $('#NoteAttachmentItem' + attachment).remove();
+              }
+            })["catch"](function (error) {
+              console.log(error);
+            });
+
+          case 3:
           case "end":
             return _context2.stop();
         }
@@ -3954,50 +3949,39 @@ window.deleteNoteAttachment = /*#__PURE__*/function () {
     }, _callee2);
   }));
 
-  return function (_x4, _x5) {
+  return function (_x5, _x6, _x7) {
     return _ref2.apply(this, arguments);
   };
-}(); // Удаление записки файла
-// Глобальная функция. Чтобы использовать сразу из шаблона
-
+}();
 /**
- * Delete note (AJAX)
- *
- * @param id
+ * @param note_uid
+ * @param note_id
  * @param title
  * @returns {Promise<void>}
  */
 
 
 window.deleteNote = /*#__PURE__*/function () {
-  var _ref3 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3(id, title) {
+  var _ref3 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee3(note_uid, note_id, title) {
     return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
-            if (confirm('Delete ' + title + ' from notes ?')) {
-              $.ajax({
-                url: '/api/deleteNote',
-                type: 'POST',
-                data: {
-                  id: id
-                },
-                async: true,
-                headers: {
-                  "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')
-                },
-                dataType: 'JSON',
-                success: function success(res) {
-                  console.log(res);
-
-                  if (res.success) {
-                    $('#NoteItem' + id).remove();
-                  }
-                }
-              });
+            if (!confirm('Delete ' + title + ' from notes ?')) {
+              _context3.next = 3;
+              break;
             }
 
-          case 1:
+            _context3.next = 3;
+            return axios["delete"]('/notes/' + note_uid).then(function (res) {
+              if (res.data.success) {
+                $('#NoteItem' + note_id).remove();
+              }
+            })["catch"](function (error) {
+              console.log(error);
+            });
+
+          case 3:
           case "end":
             return _context3.stop();
         }
@@ -4005,7 +3989,7 @@ window.deleteNote = /*#__PURE__*/function () {
     }, _callee3);
   }));
 
-  return function (_x6, _x7) {
+  return function (_x8, _x9, _x10) {
     return _ref3.apply(this, arguments);
   };
 }();

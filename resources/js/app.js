@@ -52,85 +52,57 @@ $(document).ready(function() {
     })
 
 })
-
-// Прекращение доступа юзеру к записки
-// Глобальная функция. Чтобы использовать сразу из шаблона
-window.unshareNote = async function(sharing_id, note_id, user_id) {
-
-    if (confirm('Stop sharing the note with this user ?')) {
-        $.ajax({
-            url: '/api/unshareNote',
-            type: 'POST',
-            data: {note_id, user_id},
-            async: true,
-            headers: {"X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')},
-            dataType: 'JSON',
-            success: (res) => {
-                if(res.success) {
-                    $('#NoteSharingItem' + sharing_id).remove()
-                }
+/**
+ * @param note_uid
+ * @param sharing_id
+ * @param user_id
+ * @param user_name
+ * @returns {Promise<void>}
+ */
+window.unshareNote = async function(note_uid, sharing_id, user_id, user_name) {
+    if (confirm('Stop sharing this note with ' + user_name + ' ?')) {
+        await axios.post('/notes/' + note_uid + '/unshareNote', {sharing_id}).then(function (res) {
+            if(res.data.success) {
+                $('#NoteSharingItem' + sharing_id).remove();
             }
-        })
+        }).catch(function (error) {
+            console.log(error);
+        });
     }
-
 }
 
-// Удаление прикрелённого к записки файла
-// Глобальная функция. Чтобы использовать сразу из шаблона
-
 /**
- *
- * @param file_id
+ * @param note_uid
+ * @param attachment
  * @param file_name
  * @returns {Promise<void>}
  */
-window.deleteNoteAttachment = async function(file_id, file_name) {
-
+window.deleteNoteAttachment = async function(note_uid, attachment, file_name) {
     if (confirm('Delete ' + file_name + ' from note attachments ?')) {
-        $.ajax({
-            url: '/api/deleteNoteAttachment',
-            type: 'POST',
-            data: {file_id},
-            async: true,
-            headers: {"X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')},
-            dataType: 'JSON',
-            success: (res) => {
-                if(res.success) {
-                    $('#NoteAttachmentItem' + file_id).remove()
-                }
+        await axios.post('/notes/' + note_uid + '/deleteNoteAttachment', {attachment}).then(function (res) {
+            if(res.data.success) {
+                $('#NoteAttachmentItem' + attachment).remove()
             }
-        })
+        }).catch(function (error) {
+            console.log(error);
+        });
     }
-
 }
 
-// Удаление записки файла
-// Глобальная функция. Чтобы использовать сразу из шаблона
-
 /**
- * Delete note (AJAX)
- *
- * @param id
+ * @param note_uid
+ * @param note_id
  * @param title
  * @returns {Promise<void>}
  */
-window.deleteNote = async function(id, title) {
-
+window.deleteNote = async function(note_uid, note_id, title) {
     if (confirm('Delete ' + title + ' from notes ?')) {
-        $.ajax({
-            url: '/api/deleteNote',
-            type: 'POST',
-            data: {id},
-            async: true,
-            headers: {"X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr('content')},
-            dataType: 'JSON',
-            success: (res) => {
-                console.log(res)
-                if(res.success) {
-                    $('#NoteItem' + id).remove()
-                }
+        await axios.delete('/notes/' + note_uid).then(function (res) {
+            if(res.data.success) {
+                $('#NoteItem' + note_id).remove()
             }
-        })
+        }).catch(function (error) {
+            console.log(error);
+        });
     }
-
 }

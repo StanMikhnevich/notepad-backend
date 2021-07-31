@@ -2,7 +2,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
 
-            <form action="{{ route('notes.share') }}" method="POST">
+            <form action="{{ route('notes.show', $note->uid) }}/share" method="POST">
                 @csrf
                 <input type="hidden" name="note_id" value="{{ $note->id }}">
 

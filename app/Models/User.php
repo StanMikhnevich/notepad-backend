@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use App\Notifications\NoteShareNotification;
+use Illuminate\Support\Facades\Notification;
+
+
 /**
  * App\Models\User
  *
@@ -21,12 +25,16 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $remember_token
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection|\Laravel\Passport\Client[] $clients
+ * @property-read int|null $clients_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Note[] $notes
  * @property-read int|null $notes_count
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection|\Illuminate\Notifications\DatabaseNotification[] $notifications
  * @property-read int|null $notifications_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Note[] $shared_notes
  * @property-read int|null $shared_notes_count
+ * @property-read \Illuminate\Database\Eloquent\Collection|\Laravel\Passport\Token[] $tokens
+ * @property-read int|null $tokens_count
  * @method static \Database\Factories\UserFactory factory(...$parameters)
  * @method static \Illuminate\Database\Eloquent\Builder|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|User newQuery()
@@ -89,5 +97,33 @@ class User extends Authenticatable implements MustVerifyEmail
     public function shared_notes(): BelongsToMany
     {
         return $this->belongsToMany(Note::class, NoteShared::class);
+    }
+
+    /**
+     * @param Note $note
+     * @param User $sender
+     */
+    public function notifyAboutNoteSharing(Note $note, User $sender)
+    {
+        Notification::send($this, new NoteShareNotification([
+            'name' => 'Note sharing notification',
+            'action' => 'Check',
+            'url' => url('/notes') . '/' . $note->uid,
+            'username' => $sender->name,
+            'title' => $note->title,
+            'msg' => '<strong>' . e($sender->name) . '</strong> has been shared note <strong>' . e($note->title) . '</strong> with you.',
+        ]));
+    }
+
+    /**
+     * @param Note $note
+     * @param User $sender
+     */
+    public function notifyAboutNoteUnsharing(Note $note, User $sender)
+    {
+        Notification::send($this, new NoteShareNotification([
+            'name' => 'Note sharing notification',
+            'msg' => '<strong>' . $sender->name . '</strong> has stopped sharing the note <strong>' . $note->title . '</strong> with you.',
+        ]));
     }
 }

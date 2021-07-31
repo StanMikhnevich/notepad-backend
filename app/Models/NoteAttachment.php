@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * App\Models\NoteAttachment
@@ -44,5 +45,24 @@ class NoteAttachment extends Model
     {
         return $this->belongsTo(Note::class, 'note_id');
     }
+
+    /**
+     * @return bool|null
+     */
+    public function deleteWithFile(): bool
+    {
+        return ($this->unlinkFile()) ? $this->delete() : false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function unlinkFile(): bool
+    {
+        $storage = Storage::disk('public');
+
+        return $storage->exists($this->path) && $storage->delete($this->path);
+    }
+
 
 }

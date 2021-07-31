@@ -23,13 +23,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('notes?show=my', 'NoteController@index')->name('notes.my');
     Route::get('notes?show=shared', 'NoteController@index')->name('notes.shared');
 
-    Route::post('/notes/share', 'NoteController@share')->name('notes.share');
+    Route::post('/notes/{note}/share', 'NoteController@share');
+    Route::post('/notes/{note}/unshareNote', 'NoteController@unshare');
+    Route::post('/notes/{note}/deleteNoteAttachment', 'NoteController@detach');
 
     Route::post('/api/checkUserByEmail', 'UserController@checkUserByEmail');
-
-    Route::post('/api/unshareNote', 'NoteController@unshare');
-    Route::post('/api/deleteNote', 'NoteController@destroy');
-    Route::post('/api/deleteNoteAttachment', 'NoteController@deleteNoteAttachment');
 });
 
 require __DIR__.'/auth.php';

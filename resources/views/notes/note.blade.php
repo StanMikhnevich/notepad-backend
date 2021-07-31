@@ -7,7 +7,7 @@
             <i class="bi bi-lock-fill text-gray-500 ms-3"></i>
             @endif
 
-            @if($isOwner)
+            @if(($note->user_id ?? '') == (auth()->user()->id ?? ''))
             <a class="btn btn-sm shadow-sm bg-white float-end ms-3" href="#" data-bs-toggle="modal" data-bs-target="#NoteShareModal"><i class="bi bi-share"></i></a>
             <a class="btn btn-sm shadow-sm bg-white float-end ms-3" href="{{ route('notes.edit', $note->uid) }}"><i class="bi bi-pencil-square"></i></a>
             @endif
@@ -24,7 +24,7 @@
 
             <div class="bg-white mb-3 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
-                    {!! $note->text !!}
+                    {!! $note->text_markdowned !!}
                     @isset($note->attachments[0])
                     <hr class="my-5">
                         <h5 class="form-label">Attachments</h5>
@@ -38,16 +38,16 @@
                 </div>
             </div>
 
-            @isset($shared[0])
+            @if($note->shared_users && ($note->user_id == (auth()->user()->id ?? '')))
             <div class="bg-white mb-3 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="mb-3">
                         <h5 class="form-label">Shared with</h5>
                     </div>
 
-                    @foreach ($shared as $sharing)
+                    @foreach ($note->shared_users as $sharing)
                     <span id="NoteSharingItem{{ $sharing->id }}" class="badge bg-light shadow-sm text-secondary p-3 me-1 mb-1">
-                        <i class="bi bi-person-fill me-3"></i> {{ $sharing->user->name }}
+                        <i class="bi bi-person-fill me-3"></i> {{ $sharing->name }}
                     </span>
                     @endforeach
 
@@ -59,7 +59,7 @@
         </div>
     </div>
 
-    @if($isOwner)
+    @if(($note->user_id ?? '') == (auth()->user()->id ?? ''))
     @include('notes._create')
     @include('notes._share')
     @endif
