@@ -92,12 +92,6 @@ class Note extends Model
 
         if ($show == 'public' && $show != 'all') {
             return $builder->where('private', 0);
-
-//            if (!auth()->user()) {
-//
-//            } elseif (!auth()->user()->hasVerifiedEmail()) {
-//                return redirect(route('verification.notice'));
-//            }
         }
 
         if ($show == 'shared' && $show != 'all') {

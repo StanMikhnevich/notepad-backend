@@ -11,6 +11,8 @@
                 @case('public')
                 {{ __('Public notes') }} ({{ count($notes) }})
                 @break
+                @default
+                {{ __('All') }} ({{ count($notes) }})
             @endswitch
 
             @isset($filters['search'])

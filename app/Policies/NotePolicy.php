@@ -30,7 +30,8 @@ class NotePolicy
      */
     public function view(?User $user, Note $note): bool
     {
-        return $this->viewAny($user) || Note::queryByAccess()->where('id', $note->id)->exists();
+        return ($this->viewAny($user) && !$user->hasVerifiedEmail())
+            || Note::queryByAccess()->where('id', $note->id)->exists();
     }
 
     /**

@@ -13,12 +13,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', 'NoteController@index')->name('notes');
-
+Route::get('/', 'NoteController@index')->name('notes.all');
 Route::get('notes/?show=public', 'NoteController@index')->name('notes.public');
 
-Route::resource('notes', 'NoteController');
+Route::middleware(['notVerified'])->group(function () {
+    Route::get('/notes/{note}', 'NoteController@show');
+});
+
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('notes', 'NoteController')->except('show');
 
     Route::get('notes?show=my', 'NoteController@index')->name('notes.my');
     Route::get('notes?show=shared', 'NoteController@index')->name('notes.shared');
