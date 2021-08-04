@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Events\NoteShareEvent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Ramsey\Uuid\Rfc4122\UuidV4;
 
 
 /**
@@ -24,7 +27,7 @@ use Illuminate\Support\Str;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\NoteAttachment[] $attachments
  * @property-read int|null $attachments_count
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\NoteShared[] $shared
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\NoteUser[] $shared
  * @property-read int|null $shared_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $shared_users
  * @property-read int|null $shared_users_count
@@ -56,6 +59,62 @@ class Note extends Model
 
     protected $with = ['user', 'attachments', 'shared.user'];
 
+    public static function queryByAccess(Builder $builder = null)
+    {
+        $builder = $builder ?: Note::query();
+
+        $builder->where(function (Builder $builder) {
+            $builder->where('user_id', auth()->id());
+            $builder->orWhere('private', 0);
+            $builder->orWhereHas('shared', function (Builder $builder) {
+                $builder->where('user_id', auth()->id());
+            });
+        });
+
+        return $builder;
+    }
+
+    /**
+     * @param array $filters
+     * @param Builder|null $builder
+     * @return Builder|Note
+     */
+    public static function searchQuery(array $filters = [], Builder $builder = null)
+    {
+        $builder = $builder ?: Note::query();
+
+        $show = (string) ($filters['show'] ?? 'all');
+        $search = (string) ($filters['search'] ?? '');
+
+        if ($show == 'my' && $show != 'all') {
+            $builder->where('user_id', auth()->id());
+        }
+
+        if ($show == 'public' && $show != 'all') {
+            return $builder->where('private', 0);
+
+//            if (!auth()->user()) {
+//
+//            } elseif (!auth()->user()->hasVerifiedEmail()) {
+//                return redirect(route('verification.notice'));
+//            }
+        }
+
+        if ($show == 'shared' && $show != 'all') {
+            return $builder->whereHas('shared', function (Builder $builder) {
+                $builder->where('user_id',  auth()->id());
+            });
+        }
+
+        if ($search) {
+            $builder->where('title', 'LIKE', "%$search%");
+            $builder->orWhere('text', 'LIKE', "%$search%");
+        }
+
+        return $builder;
+
+    }
+
     /**
      * @return string
      */
@@ -67,7 +126,7 @@ class Note extends Model
     /**
      * @return string
      */
-    public function getTextMarkdownedAttribute(): string
+    public function getTextMdAttribute(): string
     {
         return Str::markdown($this->text);
     }
@@ -89,16 +148,17 @@ class Note extends Model
      */
     public function shared(): HasMany
     {
-        return $this->hasMany(NoteShared::class);
+        return $this->hasMany(NoteUser::class);
     }
 
     /**
      * @return BelongsToMany
      */
-    public function shared_users(): BelongsToMany
+    public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, NoteShared::class);
+        return $this->belongsToMany(User::class, NoteUser::class);
     }
+
 
     /**
      * Get note attachments
@@ -125,6 +185,16 @@ class Note extends Model
      *
      * @return bool
      */
+    public function hasShared(): bool
+    {
+        return (bool)$this->shared->isNotEmpty();
+    }
+
+    /**
+     * Check note sharing existence
+     *
+     * @return bool
+     */
     public function isShared(): bool
     {
         return (bool)$this->shared->isNotEmpty();
@@ -141,8 +211,7 @@ class Note extends Model
             $ext = $file->getClientOriginalExtension();
             $original_name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $ext;
 
-            // <UUIDv4>_<count>.<extension>
-            $name = Str::uuid()->toString() . '.' . $ext;
+            $name = UuidV4::uuid4() . '.' . $ext;
             $path = $file->storeAs('note-attachments', $name, 'public');
 
             NoteAttachment::create([
@@ -159,7 +228,7 @@ class Note extends Model
      *
      * @return $this
      */
-    public function detachFiles(): Note
+    public function detachAllFiles(): Note
     {
         if ($this->hasAttachments()) {
             foreach ($this->attachments as $att) {
@@ -175,11 +244,42 @@ class Note extends Model
     }
 
     /**
+     * @param User $user
+     * @return NoteUser
+     */
+    public function addUser(User $user): NoteUser
+    {
+        /** @var NoteUser $noteUser */
+        $noteUser = $this->shared()->create(['user_id' => $user->id]);
+
+        event(new NoteShareEvent($noteUser));
+
+        return $noteUser;
+
+    }
+
+    /**
+     * @param array|numeric $sharingId
+     * @return bool
+     */
+    public function removeUser($sharingId = []): bool
+    {
+        $allSharing = $this->shared->whereIn('id', (array) $sharingId);
+
+        foreach ($allSharing as $sharing) {
+            $sharing->delete();
+            event(new NoteShareEvent($sharing, false));
+        }
+
+        return $allSharing->count() > 0;
+    }
+
+    /**
      * Terminate all shares
      *
      * @return $this
      */
-    public function unshareAll(): Note
+    public function removeAllSharing(): Note
     {
         if ($this->isShared()) {
             foreach ($this->shared as $sharing) {
@@ -197,7 +297,21 @@ class Note extends Model
      */
     public function deleteAll(): ?bool
     {
-        return $this->detachFiles()->unshareAll()->delete();
+        return $this->detachAllFiles()->removeAllSharing()->delete();
+    }
+
+    /**
+     * @param array|numeric $attachments
+     */
+    public function unlinkAttachment($attachments = []): bool
+    {
+        $attachments = $this->attachments->whereIn('id', (array) $attachments);
+
+        foreach ($attachments as $attachment) {
+            $attachment->deleteWithFile();
+        }
+
+        return $attachments->count() > 0;
     }
 
 }

@@ -17,7 +17,7 @@ class CreateNotesTable extends Migration
             $table->id();
             $table->uuid('uid');
             $table->integer('user_id');
-            $table->boolean('private');
+            $table->boolean('private')->default(0);
             $table->string('title');
             $table->text('text');
             $table->timestamps();

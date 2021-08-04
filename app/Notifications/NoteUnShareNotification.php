@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class NoteShareNotification extends Notification
+class NoteUnShareNotification extends Notification
 {
     use Queueable;
 
@@ -50,8 +50,7 @@ class NoteShareNotification extends Notification
         return (new MailMessage)
             ->subject('Note Share Notification')
             ->greeting('Hello, '.$this->user->name)
-            ->line($this->note->user->name.' has been shared note '.$this->note->title.' with you.')
-            ->action('Check now', url('/notes' . '/' . $this->note->uid))
+            ->line($this->note->user->name.' has stopped sharing the note '.$this->note->title.' with you.')
             ->line('Thank you for using our application!');
     }
 

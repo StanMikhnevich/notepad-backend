@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateNoteSharedsTable extends Migration
+class CreateNoteUserTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateNoteSharedsTable extends Migration
      */
     public function up()
     {
-        Schema::create('note_shareds', function (Blueprint $table) {
+        Schema::create('note_users', function (Blueprint $table) {
             $table->id();
             $table->char('note_id', 36);
             $table->integer('user_id');
@@ -28,6 +28,6 @@ class CreateNoteSharedsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('note_shareds');
+        Schema::dropIfExists('note_users');
     }
 }

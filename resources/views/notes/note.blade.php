@@ -24,7 +24,7 @@
 
             <div class="bg-white mb-3 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
-                    {!! $note->text_markdowned !!}
+                    {!! $note->text_md !!}
                     @isset($note->attachments[0])
                     <hr class="my-5">
                         <h5 class="form-label">Attachments</h5>
@@ -38,14 +38,14 @@
                 </div>
             </div>
 
-            @if($note->shared_users && ($note->user_id == (auth()->user()->id ?? '')))
+            @if($note->hasShared() && ($note->user_id == (auth()->id() ?? '')))
             <div class="bg-white mb-3 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="mb-3">
                         <h5 class="form-label">Shared with</h5>
                     </div>
 
-                    @foreach ($note->shared_users as $sharing)
+                    @foreach ($note->users as $sharing)
                     <span id="NoteSharingItem{{ $sharing->id }}" class="badge bg-light shadow-sm text-secondary p-3 me-1 mb-1">
                         <i class="bi bi-person-fill me-3"></i> {{ $sharing->name }}
                     </span>

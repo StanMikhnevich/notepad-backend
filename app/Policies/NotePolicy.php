@@ -2,9 +2,7 @@
 
 namespace App\Policies;
 
-use App\Http\Requests\BaseFormRequest;
 use App\Models\Note;
-use App\Models\NoteShared;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
@@ -15,13 +13,12 @@ class NotePolicy
     /**
      * Determine whether the user can view any models.
      *
-     * @param \App\Models\User $user
+     * @param User|null $user
      * @return bool
      */
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
-//        return (bool) $user;
-        return true;
+        return (bool) $user;
     }
 
     /**
@@ -33,13 +30,8 @@ class NotePolicy
      */
     public function view(?User $user, Note $note): bool
     {
-        $isOwner = $user && $note->user_id == ($user->id ?? '');
-        $hasAccess = $note->shared_users()->find(($user->id ?? ''));
-        $canRead = (!$note->private && !$user);
-
-        return ($isOwner || $hasAccess || $canRead);
+        return $this->viewAny($user) || Note::queryByAccess()->where('id', $note->id)->exists();
     }
-//        return ($request->isAuthenticated()) ? ($isOwner || $hasAccess) : false;
 
     /**
      * Determine whether the user can create models.
@@ -49,7 +41,7 @@ class NotePolicy
      */
     public function store(User $user): bool
     {
-        return (bool)$user;
+        return (bool) $user;
     }
 
     /**
@@ -61,7 +53,7 @@ class NotePolicy
      */
     public function edit(User $user, Note $note): bool
     {
-        return (bool)$note->user_id == $user->id;
+        return (bool) $note->user_id == $user->id;
     }
 
     /**
@@ -73,7 +65,7 @@ class NotePolicy
      */
     public function update(User $user, Note $note): bool
     {
-        return (bool)$note->user_id == $user->id;
+        return (bool) $note->user_id == $user->id;
     }
 
     /**
@@ -85,7 +77,7 @@ class NotePolicy
      */
     public function delete(User $user, Note $note): bool
     {
-        return (bool)$note->user_id == $user->id;
+        return (bool) $note->user_id == $user->id;
     }
 
     /**
@@ -97,7 +89,7 @@ class NotePolicy
      */
     public function share(User $user, Note $note): bool
     {
-        return (bool)$note->user_id == $user->id;
+        return (bool) $note->user_id == $user->id;
     }
 
     /**
@@ -109,7 +101,7 @@ class NotePolicy
      */
     public function unshare(User $user, Note $note): bool
     {
-        return (bool)$note->user_id == $user->id;
+        return (bool) $note->user_id == $user->id;
     }
 
     /**
@@ -133,6 +125,6 @@ class NotePolicy
      */
     public function forceDelete(User $user, Note $note): bool
     {
-        return (bool)$note->user_id == $user->id;
+        return (bool) $note->user_id == $user->id;
     }
 }

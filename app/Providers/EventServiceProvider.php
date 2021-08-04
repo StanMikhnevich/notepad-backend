@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Auth\Events\Registered;
+use App\Listeners\NoteShareListener;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Registered;
+use App\Events\NoteShareEvent;
+use App\Notifications\NoteShareNotification;
+use App\Notifications\NoteUnShareNotification;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -15,9 +19,8 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        Registered::class => [
-            SendEmailVerificationNotification::class,
-        ],
+        Registered::class => [ SendEmailVerificationNotification::class, ],
+        NoteShareEvent::class => [ NoteShareListener::class, ],
     ];
 
     /**

@@ -70,7 +70,7 @@
                     </div>
                 </div>
 
-                @if($note->isShared())
+                @if($note->hasShared())
                 <div class="bg-white mb-3 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
 

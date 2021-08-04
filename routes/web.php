@@ -30,4 +30,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/checkUserByEmail', 'UserController@checkUserByEmail');
 });
 
+
 require __DIR__.'/auth.php';

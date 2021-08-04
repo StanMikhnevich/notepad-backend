@@ -24,7 +24,7 @@ class UpdateNoteRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'id' => 'nullable|integer|min:1|max:11',
+            'id' => 'required|integer|min:1',
             'title' => 'required|string|min:5|max:100',
             'text' => 'required|string|min:5|max:2000',
             'private' => 'boolean',
