@@ -13,7 +13,7 @@ class StoreNoteRequest extends BaseFormRequest
      */
     public function authorize(): bool
     {
-        return $this->isAuthenticated();
+        return true;
     }
 
     /**

@@ -23,3 +23,4 @@
 .note-item {}
 .note-item .item-actions {visibility: hidden; opacity: 0}
 .note-item:hover .item-actions {visibility: visible; opacity: 1}
+

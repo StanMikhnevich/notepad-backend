@@ -14,7 +14,7 @@
         </h2>
     </x-slot>
 
-    <div class="container mt-4">
+    <div class="container">
         <div id="NoteItem">
             <form action="{{ route('notes.update', $note->uid) }}" method="POST" enctype="multipart/form-data">
                 @csrf

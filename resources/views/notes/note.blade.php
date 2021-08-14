@@ -19,7 +19,7 @@
         </h2>
     </x-slot>
 
-    <div class="container mt-4">
+    <div class="container">
         <div id="NoteItem">
 
             <div class="bg-white mb-3 overflow-hidden shadow-sm sm:rounded-lg">

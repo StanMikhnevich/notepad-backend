@@ -18,8 +18,8 @@
         <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>
         <script src="{{ asset('js/app.js') }}" defer></script>
     </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+    <body class="font-sans bg-gray-100 antialiased">
+        <div class="min-h-screen">
             @include('layouts.navigation')
 
             <!-- Page Heading -->

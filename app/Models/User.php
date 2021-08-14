@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\VerifyEmail;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -76,7 +77,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'email_verified_at' => 'boolean',
     ];
 
     /**
@@ -106,6 +107,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->notes()->create(array_merge($attributes, [
             'uid' => UuidV4::uuid4(),
         ]));
+    }
+
+    /**
+     * Send the email verification notification.
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification(string $from = 'web')
+    {
+        $this->notify(new VerifyEmail($from));
     }
 
 }

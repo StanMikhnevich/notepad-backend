@@ -2,17 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use App\Http\Requests\BaseFormRequest;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\Api\Auth\RegisterRequest;
+use App\Http\Requests\Api\Auth\LoginRequest;
 
 use App\Models\User;
+use Validator;
+
 
 class UserController extends Controller
 {
 
-    // Проверка наличия юзера по email
-    public function checkUserByEmail(Request $req)
+    /**
+     * @param BaseFormRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkUserByEmail(BaseFormRequest $request): JsonResponse
     {
-        $user = User::where('email', $req->email)->get()->first();
+//        $this->authorize('check', $user);
+
+        $user = User::findBy($request->input('email'), 'email');
 
         if (!$user) {
             return response()->json(['success' => false, 'msg' => 'Пользователь не найден']);

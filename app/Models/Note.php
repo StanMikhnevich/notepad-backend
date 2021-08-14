@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Events\NoteShareEvent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Ramsey\Uuid\Rfc4122\UuidV4;
-
+use App\Events\NoteShareEvent;
 
 /**
  * App\Models\Note
@@ -119,6 +118,7 @@ class Note extends Model
 
     /**
      * @return string
+     * @noinspection PhpUnused
      */
     public function getTextMdAttribute(): string
     {
@@ -181,17 +181,7 @@ class Note extends Model
      */
     public function hasShared(): bool
     {
-        return (bool)$this->shared->isNotEmpty();
-    }
-
-    /**
-     * Check note sharing existence
-     *
-     * @return bool
-     */
-    public function isShared(): bool
-    {
-        return (bool)$this->shared->isNotEmpty();
+        return (bool) $this->shared->isNotEmpty();
     }
 
     /**
@@ -275,7 +265,7 @@ class Note extends Model
      */
     public function removeAllSharing(): Note
     {
-        if ($this->isShared()) {
+        if ($this->hasShared()) {
             foreach ($this->shared as $sharing) {
                 $sharing->delete();
             }

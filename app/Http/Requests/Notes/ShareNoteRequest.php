@@ -15,7 +15,7 @@ class ShareNoteRequest extends BaseFormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return (bool) $this->isAuthenticated();
     }
 
     /**

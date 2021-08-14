@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', 'NoteController@index')->name('notes.all');
+Route::get('/', 'NoteController@index')->name('index');
+Route::get('notes/?show=all', 'NoteController@index')->name('notes.all');
 Route::get('notes/?show=public', 'NoteController@index')->name('notes.public');
 
 Route::middleware(['notVerified'])->group(function () {
@@ -32,6 +33,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/api/checkUserByEmail', 'UserController@checkUserByEmail');
 });
-
 
 require __DIR__.'/auth.php';

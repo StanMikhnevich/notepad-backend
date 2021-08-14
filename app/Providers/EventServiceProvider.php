@@ -2,14 +2,11 @@
 
 namespace App\Providers;
 
+use App\Events\NoteShareEvent;
 use App\Listeners\NoteShareListener;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Registered;
-use App\Events\NoteShareEvent;
-use App\Notifications\NoteShareNotification;
-use App\Notifications\NoteUnShareNotification;
 
 class EventServiceProvider extends ServiceProvider
 {

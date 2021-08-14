@@ -20,12 +20,12 @@
             @endisset
 
             @auth
-            <a class="btn btn-sm shadow-sm bg-white float-end" href="#" data-bs-toggle="modal" data-bs-target="#NoteCreateModal"><i class="bi bi-plus"></i></a>
+            <div class="bg-white rounded-2 no-underline text-center shadow-sm cursor-pointer float-right w-12" data-bs-toggle="modal" data-bs-target="#NoteCreateModal"><i class="bi bi-plus"></i></div>
             @endauth
         </h2>
     </x-slot>
 
-    <div class="container mt-4">
+    <div class="container">
         <div id="NotesList" class="col-12">
 
             @forelse ($notes as $note)
@@ -58,7 +58,7 @@
                             </span>
                             @endif
 
-                            <div class="float-end ms-3 text-secondary text-right font-half-lg">
+                            <div class="float-right ms-3 text-secondary text-right font-half-lg">
                                 {{ $note->created_at->diffForHumans() }}<br>{{ $note->updated_at->diffForHumans() }}
                             </div>
 

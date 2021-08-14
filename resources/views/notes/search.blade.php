@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="container mt-4">
+    <div class="container">
         <div id="NotesListSearch" class="col-12">
             @forelse ($notes as $note)
                 <div class="bg-white mb-3 shadow-sm rounded-3">

@@ -5,8 +5,6 @@ namespace App\Listeners;
 use App\Events\NoteShareEvent;
 use App\Notifications\NoteShareNotification;
 use App\Notifications\NoteUnShareNotification;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Notification;
 
 class NoteShareListener

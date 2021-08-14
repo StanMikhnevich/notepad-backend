@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace App\Http\Middleware\Api;
 
 use Closure;
 use Illuminate\Http\Request;
@@ -16,6 +16,8 @@ class notVerified
      */
     public function handle(Request $request, Closure $next)
     {
+        dd($request->toArray());
+        // todo WTF? Property accessed via magic method
         if($request->note->private && $request->user() && !$request->user()->hasVerifiedEmail()) {
             return redirect(route('verification.notice'));
         } elseif(!$request->user()) {
