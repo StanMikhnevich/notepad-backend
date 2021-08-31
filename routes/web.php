@@ -14,15 +14,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return redirect(route('notes.all'));
+    return redirect(route('notes.root', ['show' => 'all']));
 })->name('index');
-
-Route::get('notes/?show=all', 'NoteController@index')->name('notes.all');
-Route::get('notes/?show=public', 'NoteController@index')->name('notes.public');
-
-//Route::middleware(['notVerified'])->group(function () {
-    Route::get('/notes/{note}', 'NoteController@show');
-//});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('notes', 'NoteController')->except('show');
@@ -36,5 +29,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/api/checkUserByEmail', 'UserController@checkUserByEmail');
 });
+
+Route::get('/public/notes', 'NoteController@index')->name('notes.root');
+
+Route::middleware(['authButNotVerified'])->group(function () {
+    Route::get('/notes/{note}', 'NoteController@show');
+});
+
 
 require __DIR__.'/auth.php';
