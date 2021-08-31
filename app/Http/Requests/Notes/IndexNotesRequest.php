@@ -3,8 +3,6 @@
 namespace App\Http\Requests\Notes;
 
 use App\Http\Requests\BaseFormRequest;
-use Illuminate\Validation\Rule;
-use App\Models\Note;
 
 class IndexNotesRequest extends BaseFormRequest
 {
@@ -16,7 +14,7 @@ class IndexNotesRequest extends BaseFormRequest
     public function authorize(): bool
     {
 //        return (bool) $this->isAuthenticated();
-        return (bool) true;
+        return true;
     }
 
     /**

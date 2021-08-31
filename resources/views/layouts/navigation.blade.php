@@ -12,20 +12,20 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-nav-link class="no-underline" :href="route('notes.all')" :active="request()->input('show') == 'all'">
+                    <x-nav-link class="no-underline" :href="route('notes.root', ['show' => 'all'])" :active="request()->input('show') == 'all'">
                         {{ __('All') }}
                     </x-nav-link>
 
-                    <x-nav-link class="no-underline" :href="route('notes.public')" :active="request()->input('show') == 'public'">
+                    <x-nav-link class="no-underline" :href="route('notes.root', ['show' => 'public'])" :active="request()->input('show') == 'public'">
                         {{ __('Public') }}
                     </x-nav-link>
 
                     @auth
-                    <x-nav-link class="no-underline" :href="route('notes.my')" :active="request()->input('show') == 'my'">
+                    <x-nav-link class="no-underline" :href="route('notes.root', ['show' => 'my'])" :active="request()->input('show') == 'my'">
                         {{ __('My') }}
                     </x-nav-link>
 
-                    <x-nav-link class="no-underline" :href="route('notes.shared')" :active="request()->input('show') == 'shared'">
+                    <x-nav-link class="no-underline" :href="route('notes.root', ['show' => 'shared'])" :active="request()->input('show') == 'shared'">
                         {{ __('Shared') }}
                     </x-nav-link>
                     @endauth

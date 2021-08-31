@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,7 +43,7 @@ use App\Events\NoteShareEvent;
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereUid($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Note whereUserId($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class Note extends Model
 {

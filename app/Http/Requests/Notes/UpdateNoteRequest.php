@@ -13,7 +13,7 @@ class UpdateNoteRequest extends BaseFormRequest
      */
     public function authorize(): bool
     {
-        return (bool) $this->isAuthenticated();
+        return $this->isAuthenticated();
     }
 
     /**

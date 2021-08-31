@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -15,9 +17,9 @@ use Illuminate\Support\Facades\Storage;
  * @property string $original
  * @property string $name
  * @property string $path
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Note $note
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Note $note
  * @method static \Illuminate\Database\Eloquent\Builder|NoteAttachment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|NoteAttachment newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|NoteAttachment query()
@@ -28,7 +30,7 @@ use Illuminate\Support\Facades\Storage;
  * @method static \Illuminate\Database\Eloquent\Builder|NoteAttachment whereOriginal($value)
  * @method static \Illuminate\Database\Eloquent\Builder|NoteAttachment wherePath($value)
  * @method static \Illuminate\Database\Eloquent\Builder|NoteAttachment whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class NoteAttachment extends Model
 {
