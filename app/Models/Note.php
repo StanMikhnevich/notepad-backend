@@ -194,7 +194,7 @@ class Note extends Model
         foreach ($files as $file) {
             $ext = $file->getClientOriginalExtension();
             $original_name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $ext;
-
+            $type = explode('/', $file->getMimeType())[0];
             $name = UuidV4::uuid4() . '.' . $ext;
             $path = $file->storeAs('note-attachments', $name, 'public');
 
@@ -202,6 +202,7 @@ class Note extends Model
                 'note_id' => $this->id,
                 'original' => $original_name,
                 'name' => $name,
+                'type' => $type,
                 'path' => $path
             ]);
         }

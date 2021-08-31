@@ -18,6 +18,7 @@ class CreateNoteAttachmentsTable extends Migration
             $table->integer('note_id');
             $table->string('original');
             $table->string('name');
+            $table->string('type');
             $table->string('path');
             $table->timestamps();
         });

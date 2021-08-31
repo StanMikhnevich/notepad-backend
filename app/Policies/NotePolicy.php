@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\Note;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Auth\Access\Response;
 
 class NotePolicy
 {
@@ -25,7 +26,7 @@ class NotePolicy
      * Determine whether the user can view the model.
      *
      * @param User|null $user
-     * @param \App\Models\Note $note
+     * @param Note $note
      * @return bool
      */
     public function view(?User $user, Note $note): bool
@@ -37,7 +38,7 @@ class NotePolicy
     /**
      * Determine whether the user can create models.
      *
-     * @param \App\Models\User $user
+     * @param User $user
      * @return bool
      */
     public function store(User $user): bool
@@ -48,9 +49,9 @@ class NotePolicy
     /**
      * Determine whether the user can edit the model.
      *
-     * @param \App\Models\User $user
-     * @param \App\Models\Note $note
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param Note $note
+     * @return Response|bool
      */
     public function edit(User $user, Note $note): bool
     {
@@ -60,9 +61,9 @@ class NotePolicy
     /**
      * Determine whether the user can update the model.
      *
-     * @param \App\Models\User $user
-     * @param \App\Models\Note $note
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param Note $note
+     * @return Response|bool
      */
     public function update(User $user, Note $note): bool
     {
@@ -72,9 +73,9 @@ class NotePolicy
     /**
      * Determine whether the user can delete the model.
      *
-     * @param \App\Models\User $user
-     * @param \App\Models\Note $note
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param Note $note
+     * @return Response|bool
      */
     public function delete(User $user, Note $note): bool
     {
@@ -84,9 +85,9 @@ class NotePolicy
     /**
      * Determine whether the user can share the model.
      *
-     * @param \App\Models\User $user
-     * @param \App\Models\Note $note
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param Note $note
+     * @return Response|bool
      */
     public function share(User $user, Note $note): bool
     {
@@ -96,9 +97,9 @@ class NotePolicy
     /**
      * Determine whether the user can unshare the model.
      *
-     * @param \App\Models\User $user
-     * @param \App\Models\Note $note
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param Note $note
+     * @return Response|bool
      */
     public function unshare(User $user, Note $note): bool
     {
@@ -108,9 +109,9 @@ class NotePolicy
     /**
      * Determine whether the user can delete attachments of the model.
      *
-     * @param \App\Models\User $user
-     * @param \App\Models\Note $note
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param Note $note
+     * @return Response|bool
      */
     public function detach(User $user, Note $note): bool
     {
@@ -120,9 +121,9 @@ class NotePolicy
     /**
      * Determine whether the user can permanently delete the model.
      *
-     * @param \App\Models\User $user
-     * @param \App\Models\Note $note
-     * @return \Illuminate\Auth\Access\Response|bool
+     * @param User $user
+     * @param Note $note
+     * @return Response|bool
      */
     public function forceDelete(User $user, Note $note): bool
     {

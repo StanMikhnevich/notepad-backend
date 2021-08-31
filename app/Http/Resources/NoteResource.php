@@ -18,7 +18,7 @@ class NoteResource extends JsonResource
             'id' => $this->id,
             'uid' => $this->uid,
             'user_id' => $this->user_id,
-            'private' => $this->private,
+            'private' => boolval($this->private),
             'title' => $this->title,
             'text' => $this->text,
             'text_md' => $this->text_md,

@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Redirector;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\BaseFormRequest;
+use App\Http\Requests\Notes\IndexNotesRequest;
 use App\Http\Requests\Notes\StoreNoteRequest;
 use App\Http\Requests\Notes\UpdateNoteRequest;
 use App\Http\Requests\Notes\ShareNoteRequest;
@@ -17,9 +23,9 @@ class NoteController extends Controller
     /**
      * Show all|my|shared notes
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View
+     * @return Application|Factory|View
      */
-    public function index(BaseFormRequest $request)
+    public function index(IndexNotesRequest $request)
     {
         $filters = $request->only(['show', 'search']);
 
@@ -33,8 +39,8 @@ class NoteController extends Controller
      * Store a newly created resource in storage.
      *
      * @param StoreNoteRequest $request
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return Application|RedirectResponse|Redirector
+     * @throws AuthorizationException
      */
     public function store(StoreNoteRequest $request)
     {
@@ -52,8 +58,8 @@ class NoteController extends Controller
      * Display the specified resource.
      *A
      * @param Note $note
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return Application|Factory|View
+     * @throws AuthorizationException
      */
     public function show(Note $note)
     {
@@ -66,8 +72,8 @@ class NoteController extends Controller
 
     /**
      * @param Note $note
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|View
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return Application|Factory|View
+     * @throws AuthorizationException
      */
     public function edit(Note $note)
     {
@@ -83,8 +89,8 @@ class NoteController extends Controller
      *
      * @param UpdateNoteRequest $request
      * @param Note $note
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return Application|RedirectResponse|Redirector
+     * @throws AuthorizationException
      */
     public function update(UpdateNoteRequest $request, Note $note)
     {
@@ -103,8 +109,8 @@ class NoteController extends Controller
      * Remove the specified resource from storage.
      *
      * @param Note $note
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return JsonResponse
+     * @throws AuthorizationException
      */
     public function destroy(Note $note): JsonResponse
     {
@@ -120,8 +126,8 @@ class NoteController extends Controller
      *
      * @param ShareNoteRequest $request
      * @param Note $note
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return Application|RedirectResponse|Redirector
+     * @throws AuthorizationException
      */
     public function share(ShareNoteRequest $request, Note $note)
     {
@@ -138,8 +144,8 @@ class NoteController extends Controller
      *
      * @param UnShareNoteRequest $request
      * @param Note $note
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return JsonResponse
+     * @throws AuthorizationException
      */
     public function unshare(UnShareNoteRequest $request, Note $note): JsonResponse
     {
@@ -155,8 +161,8 @@ class NoteController extends Controller
      *
      * @param BaseFormRequest $request
      * @param Note $note
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return JsonResponse
+     * @throws AuthorizationException
      */
     public function detachFile(BaseFormRequest $request, Note $note): JsonResponse
     {

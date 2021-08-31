@@ -38,6 +38,7 @@ class NoteAttachment extends Model
         'note_id',
         'original',
         'name',
+        'type',
         'path',
     ];
 

@@ -16,7 +16,7 @@ class notVerified
      */
     public function handle(Request $request, Closure $next)
     {
-        dd($request->toArray());
+//        dd($request);
         // todo WTF? Property accessed via magic method
         if($request->note->private && $request->user() && !$request->user()->hasVerifiedEmail()) {
             return redirect(route('verification.notice'));

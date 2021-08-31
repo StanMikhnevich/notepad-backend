@@ -14,11 +14,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/notes', 'Api\NoteController@index');
-
-Route::middleware(['notVerified'])->group(function () {
-    Route::get('/notes/{note}', 'Api\NoteController@show');
-});
+Route::get('/public/notes', 'Api\NoteController@index');
+Route::get('/public/notes/{note}', 'Api\NoteController@show');
 
 Route::middleware(['auth:api', 'verified'])->group(function () {
     Route::resource('notes', 'Api\NoteController');
@@ -27,6 +24,7 @@ Route::middleware(['auth:api', 'verified'])->group(function () {
     Route::post('/notes/{note}/unshare', 'Api\NoteController@unshare');
     Route::post('/notes/{note}/deleteNoteAttachment', 'Api\NoteController@detach');
 });
+
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();

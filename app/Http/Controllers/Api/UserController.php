@@ -25,6 +25,7 @@ class UserController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
+
         $user = User::create(array_merge($request->only('name', 'email'), [
             'password' => bcrypt($request->input('password')),
         ]));

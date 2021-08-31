@@ -4,28 +4,30 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\NoteResource;
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use App\Http\Requests\BaseFormRequest;
+use App\Http\Requests\Api\Notes\IndexNotesRequest;
+use App\Http\Requests\Api\Notes\ShareNoteRequest;
 use App\Http\Requests\Notes\StoreNoteRequest;
 use App\Http\Requests\Notes\UpdateNoteRequest;
-use App\Http\Requests\Notes\ShareNoteRequest;
 use App\Http\Requests\Notes\UnShareNoteRequest;
 use App\Models\User;
 use App\Models\Note;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class NoteController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @param Request $request
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * @param IndexNotesRequest $request
+     * @return AnonymousResourceCollection
      */
-    public function index(Request $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function index(IndexNotesRequest $request): AnonymousResourceCollection
     {
         return NoteResource::collection(
-            Note::searchQuery($request->only('show'))->latest()->get()
+            Note::searchQuery($request->only('show'))->latest()->paginate($request->input('per_page'))
         );
     }
 
@@ -33,10 +35,10 @@ class NoteController extends Controller
      * Store a newly created resource in storage.
      *
      * @param StoreNoteRequest $request
-     * @return JsonResponse
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return NoteResource
+     * @throws AuthorizationException
      */
-    public function store(StoreNoteRequest $request): JsonResponse
+    public function store(StoreNoteRequest $request): NoteResource
     {
         $this->authorize('store', Note::class);
 
@@ -46,7 +48,7 @@ class NoteController extends Controller
             $note->attachFile($request->file('attachment'));
         }
 
-        return response()->json(['success' => $note->exists()]);
+        return new NoteResource($note);
 
     }
 
@@ -55,9 +57,13 @@ class NoteController extends Controller
      *
      * @param Note $note
      * @return NoteResource
+     * @throws AuthorizationException
      */
     public function show(Note $note): NoteResource
     {
+//        $note = Note::where('uid', $note)->first();
+        $this->authorize('view', $note);
+
         return new NoteResource($note);
     }
 
@@ -66,11 +72,12 @@ class NoteController extends Controller
      *
      * @param UpdateNoteRequest $request
      * @param Note $note
-     * @return JsonResponse
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return NoteResource
+     * @throws AuthorizationException
      */
-    public function update(UpdateNoteRequest $request, Note $note): JsonResponse
+    public function update(UpdateNoteRequest $request, Note $note): NoteResource
     {
+//        dd($note);
         $this->authorize('update', $note);
         $note->update($request->only(['title', 'text', 'private']));
 
@@ -78,7 +85,7 @@ class NoteController extends Controller
             $note->attachFile($request->file('attachment'));
         }
 
-        return response()->json(['success' => true]);
+        return new NoteResource($note);
     }
 
     /**
@@ -86,7 +93,7 @@ class NoteController extends Controller
      *
      * @param Note $note
      * @return JsonResponse
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function destroy(Note $note): JsonResponse
     {
@@ -94,14 +101,14 @@ class NoteController extends Controller
 
         $note->deleteAll();
 
-        return response()->json(['success' => true]);
+        return response()->json();
     }
 
     /**
      * @param ShareNoteRequest $request
      * @param Note $note
      * @return JsonResponse
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function share(ShareNoteRequest $request, Note $note): JsonResponse
     {
@@ -111,10 +118,7 @@ class NoteController extends Controller
 
         $note->addUser($user);
 
-        return response()->json([
-            'success' => true,
-            'user' => $user
-        ]);
+        return response()->json();
     }
 
     /**
@@ -122,8 +126,8 @@ class NoteController extends Controller
      *
      * @param UnShareNoteRequest $request
      * @param Note $note
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return JsonResponse
+     * @throws AuthorizationException
      */
     public function unshare(UnShareNoteRequest $request, Note $note): JsonResponse
     {
@@ -139,16 +143,15 @@ class NoteController extends Controller
      *
      * @param BaseFormRequest $request
      * @param Note $note
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @return JsonResponse
+     * @throws AuthorizationException
      */
     public function detachFile(BaseFormRequest $request, Note $note): JsonResponse
     {
         $this->authorize('detach', $note);
 
         return response()->json([
-            'success' =>  $note->unlinkAttachment($request->input('attachment'))
+            'success' => $note->unlinkAttachment($request->input('attachment'))
         ]);
     }
-
 }
