@@ -26,5 +26,8 @@
         "sass-loader": "^11.0.1",
         "tailwindcss": "^2.0.2"
     },
-    "dependencies": {}
+    "dependencies": {
+        "@mdi/font": "^6.1.95",
+        "@tailwindcss/typography": "^0.4.1"
+    }
 }

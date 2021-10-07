@@ -27,11 +27,17 @@ class NoteController extends Controller
      */
     public function index(IndexNotesRequest $request)
     {
-        $filters = $request->only(['show', 'search']);
+        $filters = $request->only(['show', 'search', 'page', 'perPage', 'order']);
+
+        $filters['order'] = $filters['order'] ?? 'created_at';
+
+        $notes = Note::searchQuery($filters)
+            ->orderBy($filters['order'] ?? 'created_at', 'DESC')
+            ->paginate($filters['perPage'] ?? 15);
 
         return view('notes.index', [
             'filters' => $filters,
-            'notes' => Note::searchQuery($filters)->latest()->get(),
+            'notes' => $notes,
         ]);
     }
 
@@ -51,7 +57,7 @@ class NoteController extends Controller
             $note->attachFile($request->file('attachment'));
         }
 
-        return redirect(route('notes.my'));
+        return redirect(route('notes.index', ['show' => 'my']));
     }
 
     /**
@@ -95,13 +101,16 @@ class NoteController extends Controller
     public function update(UpdateNoteRequest $request, Note $note)
     {
         $this->authorize('update', $note);
-        $note->update($request->only(['title', 'text', 'private']));
+        $data = $request->only(['title', 'text', 'private']);
+        $data['private'] = boolval($data['private'] ?? '');
+
+        $note->update($data);
 
         if ($request->hasfile('attachment')) {
             $note->attachFile($request->file('attachment'));
         }
 
-        return redirect(route('notes.show', $note->uid))
+        return redirect(route('notes.index') . '/' . $note->uid)
             ->with('success', trans('validation.custom.note.updated'));
     }
 
@@ -135,7 +144,7 @@ class NoteController extends Controller
 
         $note->addUser(User::findBy($request->input('email'), 'email'));
 
-        return redirect(route('notes.show', $note->uid))
+        return redirect(route('notes.index') . '/' . $note->uid)
             ->with('success', trans('validation.custom.note.shared'));
     }
 
@@ -169,7 +178,7 @@ class NoteController extends Controller
         $this->authorize('detach', $note);
 
         return response()->json([
-            'success' =>  $note->unlinkAttachment($request->input('attachment'))
+            'success' => $note->unlinkAttachment($request->input('attachment'))
         ]);
     }
 }

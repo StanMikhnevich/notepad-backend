@@ -11,48 +11,49 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap">
 
         <!-- Styles -->
+        <link rel="stylesheet" href="{{ asset('css/tailwind.min.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/mdi/css/materialdesignicons.min.css') }}">
         <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-        <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
 
         <!-- Scripts -->
-        <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>
+{{--        <script src="{{ asset('js/bootstrap.bundle.min.js') }}" defer></script>--}}
         <script src="{{ asset('js/app.js') }}" defer></script>
     </head>
-    <body class="font-sans bg-gray-100 antialiased">
-        <div class="min-h-screen">
-            @include('layouts.navigation')
+    <body class="font-sans bg-blue-50 antialiased">
 
+        @include('layouts.navigation')
+
+        <div class="px-3">
             <!-- Page Heading -->
-            <header class="container py-4">
-                {{ $header }}
+            <header class="container max-w-screen-xl mx-auto text-gray-500">
 
                 @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show mt-5" role="alert">
+                    <div class="alert bg-green-200 fade show p-5 rounded-md mt-5">
                         {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
                 @if(session('warning'))
-                    <div class="alert alert-warning alert-dismissible fade show mt-5" role="alert">
+                    <div class="alert bg-yellow-200 fade show p-5 rounded-md mt-5">
                         {{ session('warning') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
                 @if ($errors->any())
                     @foreach ($errors->all() as $error)
-                        <div class="alert alert-danger alert-dismissible fade show mt-5">
+                        <div class="alert bg-red-200 fade show p-5 rounded-md mt-5">
                             {{ $error }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endforeach
                 @endif
 
+
+                {{ $header }}
+
             </header>
 
             <!-- Page Content -->
-            <main>
+            <main class="container max-w-screen-xl mx-auto">
                 {{ $slot }}
             </main>
         </div>

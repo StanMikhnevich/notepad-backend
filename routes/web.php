@@ -20,12 +20,9 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('notes', 'NoteController')->except('show');
 
-    Route::get('notes?show=my', 'NoteController@index')->name('notes.my');
-    Route::get('notes?show=shared', 'NoteController@index')->name('notes.shared');
-
     Route::post('/notes/{note}/share', 'NoteController@share');
     Route::post('/notes/{note}/unshareNote', 'NoteController@unshare');
-    Route::post('/notes/{note}/deleteNoteAttachment', 'NoteController@detach');
+    Route::post('/notes/{note}/deleteNoteAttachment', 'NoteController@detachFile');
 
     Route::post('/api/checkUserByEmail', 'UserController@checkUserByEmail');
 });
@@ -34,6 +31,13 @@ Route::get('/public/notes', 'NoteController@index')->name('notes.root');
 
 Route::middleware(['authButNotVerified'])->group(function () {
     Route::get('/notes/{note}', 'NoteController@show');
+});
+
+Route::get('/prepare', function () {
+    \Illuminate\Support\Facades\Artisan::call('storage:link');
+    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    \Illuminate\Support\Facades\Artisan::call('config:cache');
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
 });
 
 

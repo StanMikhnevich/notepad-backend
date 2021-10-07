@@ -26,9 +26,9 @@ class StoreNoteRequest extends BaseFormRequest
         return [
             'title' => 'required|string|min:5|max:100',
             'text' => 'required|string|min:5|max:2000',
-            'private' => 'boolean',
+            'private' => 'nullable|boolean',
             'attachment' => 'nullable|array',
-            'attachment.*' => 'file|mimetypes:text/*,image/*,audio/*,video/*|max:2048',
+            'attachment.*' => 'file|mimetypes:text/*,image/*,audio/*,video/*|max:10240',
         ];
     }
 }

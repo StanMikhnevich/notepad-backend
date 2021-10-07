@@ -26,8 +26,12 @@ class NoteController extends Controller
      */
     public function index(IndexNotesRequest $request): AnonymousResourceCollection
     {
+        $filters = $request->only(['show', 'page', 'perPage']);
+
         return NoteResource::collection(
-            Note::searchQuery($request->only('show'))->latest()->paginate($request->input('per_page'))
+            Note::searchQuery($request->only('show'))
+                ->latest()
+                ->paginate($filters['perPage'] ?? 15)
         );
     }
 

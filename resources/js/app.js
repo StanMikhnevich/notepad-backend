@@ -6,7 +6,7 @@ require('alpinejs');
 $(document).ready(function() {
 
     if($('.alert').length) {
-        $('.alert').delay(2000).slideUp(500);
+        $('.alert').delay(5000).slideUp(500);
     }
 
     // Проверка наличия юзера по email
@@ -34,7 +34,7 @@ $(document).ready(function() {
                     $(this).closest('form').find('button[type=submit]').attr('disabled', false)
 
                     // Вывод имени пользователя
-                    $(this).next().html('<i class="bi bi-person-check text-success"></i> ' + res.user.name)
+                    $('#NoteShareModalEmailUser').html('<i class="mdi mdi-account text-green-500"></i> ' + res.user.name)
 
                     return ;
                 }
@@ -43,7 +43,7 @@ $(document).ready(function() {
                 $(this).closest('form').find('button[type=submit]').attr('disabled', true)
 
                 // Вывод сообщения о том, что пользователь не найден
-                $(this).next().text(res.msg)
+                $('#NoteShareModalEmailUser').text(res.msg)
 
             }
         })
@@ -51,7 +51,19 @@ $(document).ready(function() {
 
     })
 
+    $('div[data-modal-toggle=modal]').on('click', function() {
+        $('body').addClass('overflow-y-hidden');
+        $($(this).data('modal-target')).removeClass('hidden');
+    })
+
+    $('.modal').find('.modal-close').on('click', function() {
+        $('body').removeClass('overflow-y-hidden');
+        $(this).closest('.modal').addClass('hidden');
+    })
+
 })
+
+
 /**
  * @param note_uid
  * @param sharing_id
@@ -62,6 +74,7 @@ $(document).ready(function() {
 window.unshareNote = async function(note_uid, sharing_id, user_id, user_name) {
     if (confirm('Stop sharing this note with ' + user_name + ' ?')) {
         await axios.post('/notes/' + note_uid + '/unshareNote', {sharing_id}).then(function (res) {
+            console.log(res.data)
             if(res.data.success) {
                 $('#NoteSharingItem' + sharing_id).remove();
             }

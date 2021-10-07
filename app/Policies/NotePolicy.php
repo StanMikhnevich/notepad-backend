@@ -19,7 +19,7 @@ class NotePolicy
      */
     public function viewAny(?User $user): bool
     {
-        return (bool) $user;
+        return $user && $user->exists;
     }
 
     /**
@@ -43,7 +43,7 @@ class NotePolicy
      */
     public function store(User $user): bool
     {
-        return (bool) $user;
+        return $user->exists;
     }
 
     /**
@@ -55,7 +55,7 @@ class NotePolicy
      */
     public function edit(User $user, Note $note): bool
     {
-        return (bool) $note->user_id == $user->id;
+        return $note->user_id == $user->id;
     }
 
     /**
@@ -67,7 +67,7 @@ class NotePolicy
      */
     public function update(User $user, Note $note): bool
     {
-        return (bool) $note->user_id == $user->id;
+        return $note->user_id == $user->id;
     }
 
     /**
@@ -79,7 +79,7 @@ class NotePolicy
      */
     public function delete(User $user, Note $note): bool
     {
-        return (bool) $note->user_id == $user->id;
+        return $note->user_id == $user->id;
     }
 
     /**
@@ -91,7 +91,7 @@ class NotePolicy
      */
     public function share(User $user, Note $note): bool
     {
-        return (bool) $note->user_id == $user->id;
+        return $note->user_id == $user->id;
     }
 
     /**
@@ -103,7 +103,7 @@ class NotePolicy
      */
     public function unshare(User $user, Note $note): bool
     {
-        return (bool) $note->user_id == $user->id;
+        return $note->user_id == $user->id;
     }
 
     /**
@@ -115,7 +115,7 @@ class NotePolicy
      */
     public function detach(User $user, Note $note): bool
     {
-        return (bool) $note->user_id == $user->id;
+        return $note->user_id == $user->id;
     }
 
     /**
@@ -127,6 +127,6 @@ class NotePolicy
      */
     public function forceDelete(User $user, Note $note): bool
     {
-        return (bool) $note->user_id == $user->id;
+        return $note->user_id == $user->id;
     }
 }

@@ -25,7 +25,6 @@ Route::middleware(['auth:api', 'verified'])->group(function () {
     Route::post('/notes/{note}/deleteNoteAttachment', 'Api\NoteController@detach');
 });
 
-
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });

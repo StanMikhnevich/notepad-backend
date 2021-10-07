@@ -42,7 +42,7 @@ class VerificationController extends Controller
 //        $this->middleware('signed')->only('verify');
         $this->middleware('throttle:6,1')->only('verify', 'resend');
 
-        $this->redirectToApp = env('URL_HOME_APP', 'http://localhost:3000');
+        $this->redirectToApp = env('URL_HOME_APP', 'https://notepad-stan.app.dev-rminds.nl');
     }
 
     protected function redirectTo()

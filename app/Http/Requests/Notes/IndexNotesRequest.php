@@ -26,7 +26,9 @@ class IndexNotesRequest extends BaseFormRequest
     {
         return [
             'show' => 'required|in:all,public,my,shared',
-            'per_page' => 'nullable|numeric|min:1|max:100'
+            'per_page' => 'nullable|numeric|min:1|max:100',
+            'search' => 'nullable',
+            'order' => 'nullable|string',
         ];
     }
 

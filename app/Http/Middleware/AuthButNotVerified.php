@@ -16,10 +16,14 @@ class AuthButNotVerified
      */
     public function handle(Request $request, Closure $next)
     {
-        if($request->note->private && $request->user() && !$request->user()->hasVerifiedEmail()) {
-            return redirect(route('verification.notice'));
-        } elseif(!$request->user()) {
-            return redirect(route('login'));
+        if (!$request->user()) {
+            if ($request->note->private) {
+                return redirect(route('login'));
+            }
+        } else {
+            if (!$request->user()->hasVerifiedEmail() && $request->note->private) {
+                return redirect(route('verification.notice'));
+            }
         }
 
         return $next($request);

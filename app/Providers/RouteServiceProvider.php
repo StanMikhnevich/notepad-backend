@@ -20,6 +20,8 @@ class RouteServiceProvider extends ServiceProvider
      */
     public const HOME = '/';
 
+    public const APP = 'https://notepad-stan.app.dev-rminds.nl/#!/verified';
+
     /**
      * The controller namespace for the application.
      *

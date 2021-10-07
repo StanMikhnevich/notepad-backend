@@ -1,47 +1,59 @@
-<div class="modal fade" id="NoteCreateModal" tabindex="-1" aria-labelledby="NoteCreateModal" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
+<div id="NoteCreateModal" class="fixed pin z-10 inset-0 overflow-y-auto modal hidden" aria-labelledby="NoteCreateModal" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 
-            <form action="{{ route('notes.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
+        <div class="modal-close fixed inset-0 bg-black bg-opacity-50 transition-opacity cursor-pointer" aria-hidden="true"></div>
 
-                <div class="modal-header">
-                    <h5 class="modal-title">Create Note</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-2xl transform transition-all sm:align-middle mx-6 mx-auto w-1/2 z-20 m-8 p-5">
+            <div class="bg-white">
+                <div class="flex justify-between modal-header mb-5">
+                    <h2 class="font-semibold text-xl">New note</h2>
+                    <i class="mdi mdi-close cursor-pointer modal-close"></i>
                 </div>
 
-                <div class="modal-body">
+                <form action="{{ route('notes.store') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
 
-                    <div class="mb-3">
-                        <label for="NoteCreateModalTitle" class="form-label">Title</label>
-                        <input id="NoteCreateModalTitle" type="text" name="title" class="form-control form-control-lg" placeholder="Title" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="NoteCreateModalText" class="form-label">Text</label>
-                        <textarea id="NoteCreateModalText" name="text" class="form-control form-control-lg" rows="8" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="NoteCreateModalAttachment" class="form-label">Attach files</label>
-                        <input id="NoteCreateModalAttachment" class="form-control form-control-lg" type="file" name="attachment[]" accept="text/*,image/*,audio/*,video/*" multiple>
-                    </div>
-
-                    <div class="form-check">
-                        <input id="NoteCreateModalPrivate" type="checkbox" name="private" class="form-check-input" value="1" >
-                        <label class="form-check-label" for="NoteCreateModalPrivate">
-                            Private note
+                    <div class="mb-5">
+                        <label for="NoteCreateModalTitle"> Title
+                            <input id="NoteCreateModalTitle" type="text" name="title" placeholder="Note title" value="{{ old('title') }}"
+                                   class="mt-2 p-4 w-full block rounded-md border border-gray-300 focus_o-300 focus:ring focus:ring-gray-300 focus:ring-opacity-50"
+                                   required>
                         </label>
                     </div>
 
-                </div>
+                    <div class="mb-5">
+                        <label for="NoteCreateModalText"> Text
+                            <textarea id="NoteCreateModalText" name="text" rows="8" placeholder="Note text"
+                                      class="mt-2 p-4 w-full block rounded-md border border-gray-300 focus_o-300 focus:ring focus:ring-gray-300 focus:ring-opacity-50"
+                                   required>{{ old('text') }}</textarea>
+                        </label>
+                    </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-lg btn-link" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-lg btn-primary">Save changes</button>
-                </div>
+                    <div class="mb-5">
+                        <label for="NoteCreateModalAttachment"> Attachments
+                            <input id="NoteCreateModalAttachment" type="file" name="attachment[]" accept="text/*,image/*,audio/*,video/*"
+                                   class="mt-2 p-4 w-full block rounded-md border border-gray-300 focus_o-300 focus:ring focus:ring-gray-300 focus:ring-opacity-50"
+                                   multiple>
+                        </label>
+                    </div>
 
-            </form>
+                    <div class="mb-5">
+                        <label for="NoteCreateModalPrivate" class="inline-flex items-center select-none">
+                            <input id="NoteCreateModalPrivate" type="checkbox" name="private" value="1" {{ old('private') ? 'checked' : '' }}
+                                   class="p-4 block rounded-md border border-gray-300 focus_o-300">
+                            <span class="ml-2">Private</span>
+                        </label>
+                    </div>
+
+                    <div class="text-right space-x-4">
+                        <button type="button" class="px-4 py-2 text-center modal-close">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-purple-300 hover:bg-purple-400 rounded-lg text-center shadow-md transition ease-in-out duration-150"><i class="mdi mdi-plus mr-4"></i> Create</button>
+                    </div>
+
+                </form>
+            </div>
 
         </div>
     </div>
